@@ -7,5 +7,5 @@ module.exports = class Warn extends Event {
             type: `Discord`
         })
     }
-    run = async warning => this.bot.log.warn(`Client warning:\r\n`, warning)
+    handle = async warning => this.bot.log.warn(`Client warning:\r\n`, warning)
 }

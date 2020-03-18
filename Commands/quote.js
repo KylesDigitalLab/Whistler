@@ -23,24 +23,6 @@ module.exports = class User extends Command {
             }
             try {
                 const ch = await this.bot.channels.fetch(chID)
-            } catch (err) {
-                this.bot.log.warn(`Could not fetch channel:`, {
-                    suffix: suffix,
-                    svr_id: msg.guild.id,
-                    usr_id: msg.author.id
-                }, err)
-                msg.channel.send({
-                    embed: {
-                        color: this.bot.configJS.color_codes.RED,
-                        title: `❌ Error:`,
-                        description: `I couldn't fetch that channel.`,
-                        footer: {
-                            text: `Specify the channel ID first, then the message ID.`
-                        }
-                    }
-                })
-            }
-            try {
                 const m = await ch.messages.fetch(mID)
                 msg.channel.send({
                     embed: {
@@ -59,18 +41,19 @@ module.exports = class User extends Command {
                     }
                 })
             } catch (err) {
-                this.bot.log.warn(`Could not fetch message:`, {
+                this.bot.log.warn(`Could not fetch channel or message:`, {
                     suffix: suffix,
                     svr_id: msg.guild.id,
-                    usr_id: msg.author.id
+                    usr_id: msg.author.id,
+                    ch_id: chID
                 }, err)
                 msg.channel.send({
                     embed: {
                         color: this.bot.configJS.color_codes.RED,
                         title: `❌ Error:`,
-                        description: `I couldn't get that message.`,
+                        description: `I couldn't fetch that message.`,
                         footer: {
-                            text: `I need a message ID.`
+                            text: `Specify the channel ID first, then the message ID.`
                         }
                     }
                 })

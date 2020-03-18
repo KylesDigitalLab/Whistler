@@ -8,51 +8,53 @@ module.exports = class Ready extends Event {
             type: `Discord`
         })
     }
-    run = async (db) => {
-        this.bot.log.info(`Successfully connected to Discord as ${this.bot.user.tag}\r\n`, {
-            bot_id: this.bot.user.id,
-            server_count: this.bot.guilds.cache.size
+    handle = async (db) => {
+        this.bot.log.info(`Successfully connected to Discord as ${this.bot.user.tag}, in ${this.bot.guilds.cache.size} server${this.bot.guilds.cache.size == 1 ? "" : "s"} with ${this.bot.users.cache.size} user${this.bot.users.cache.size == 1 ? "" : "s"}\r\n`, {
+            id: this.bot.user.id
         })
         this.bot.guilds.cache.forEach(async svr => {
-            const serverData = await db.servers.findOne({
-                _id: svr.id
-            }).catch(err => {
+            try {
+                const serverData = await db.servers.findOne({
+                    _id: svr.id
+                })
+                if (serverData) {
+                    this.bot.log.debug(`Database entry OK for ${svr.name}\r\n`, {
+                        svr_id: svr.id
+                    })
+                } else {
+                    this.bot.log.warn(`Server data not found for ${svr.name}, creating data...\r\n`, {
+                        svr_id: svr.id
+                    })
+                    try {
+                        const serverData = await setupNewServer(this.bot, svr, new db.servers({
+                            _id: svr.id
+                        }))
+                        await db.servers.create(serverData)
+                        this.bot.log.info(`Successfully created server data for ${svr.name}\r\n`, {
+                            svr_id: svr.id
+                        })
+                    } catch (err) {
+                        this.bot.log.error(`Failed to create server data for ${svr.name}`, {
+                            svr_id: svr.id
+                        }, err)
+                    }
+                }
+            } catch (err) {
                 this.bot.log.error(`Failed to get server data for '${svr.name}'\r\n`, {
                     svr_id: svr.id
                 }, err)
-            })
-            if (serverData) {
-                this.bot.log.debug(`Database entry OK for '${svr.name}'\r\n`, {
-                    svr_id: svr.id
-                })
-            } else {
-                this.bot.log.info(`Server data not found for '${svr.name}', creating data...\r\n`, {
-                    svr_id: svr.id
-                })
-                const serverData = await setupNewServer(this.bot, svr, new db.servers({
-                    _id: svr.id
-                })).catch(err => {
-                    this.bot.log.error(`Failed to create server data for '${svr.name}'\r\n`, {
-                        svr_id: svr.id
-                    }, err)
-                })
-                await db.servers.create(serverData).catch(err => {
-                    this.bot.log.error(`Failed to create server data for '${svr.name}'\r\n`, {
-                        svr_id: svr.id
-                    }, err)
-                })
-                this.bot.log.info(`Created server data for '${svr.name}'\r\n`, {
-                    svr_id: svr.id
-                })
             }
         })
 
-        const Presence = this.bot.configJS.getPresence(this.bot)
-        const presenceData = await this.bot.user.setPresence(Presence).catch(err => this.bot.log.error("Failed to set presence", {
-                Presence: Presence,
-                error: err
-            }))
-        this.bot.log.debug(`Set presence data\r\n`, presenceData || ``)
+        const presence = this.bot.configJS.getPresence(this.bot)
+        try {
+            const presenceData = await this.bot.user.setPresence(presence)
+            this.bot.log.debug(`Set presence data\r\n`, presenceData || ``)
+        } catch (err) {
+            this.bot.log.error("Failed to set presence", {
+                Presence: presence
+            }, err)
+        }
         String.prototype.capitalize = str => str.toString().replace(/^\w/, s => s.toUpperCase())
     }
 }

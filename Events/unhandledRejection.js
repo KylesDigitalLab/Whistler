@@ -8,7 +8,7 @@ module.exports = class unhandledRejection extends Event {
             type: `Process`
         })
     }
-    run = async err => {
+    handle = async err => {
         if(err instanceof DiscordAPIError) {
             this.bot.log.warn(`Discord API Error:\r\n`, err)
         } else {

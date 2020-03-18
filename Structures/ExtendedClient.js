@@ -13,23 +13,25 @@ module.exports = class ExtendedClient extends Client {
      * @param {Object} options.clientOptions 
      */
     constructor(config, configJS, options) {
-        if(options) {
+        if (options) {
             super(options.clientOptions || {});
         } else {
             super()
         }
         this.log = new Logger(configJS.winston);
 
-        Object.defineProperty(this, `config`, {
-            value: config,
-            enumerable: false,
-            writeable: false
-        });
-        Object.defineProperty(this, `configJS`, {
-            value: configJS,
-            enumerable: false,
-            writeable: false
-        });
+        Object.defineProperties(this, {
+            config: {
+                value: config,
+                enumerable: false,
+                writeable: false
+            },
+            configJS: {
+                value: configJS,
+                enumerable: false,
+                writeable: false
+            }
+        })
         /**
          * @type {EventManager}
          */
@@ -56,14 +58,19 @@ module.exports = class ExtendedClient extends Client {
             } else {
                 member = svr.members.cache.find(member => member.user.username.toLowerCase() == str.toLowerCase());
             }
-            if (!member) member = svr.members.cache.find(member => member.nick && member.nick.toLowerCase() == str.toLowerCase())
+            if (!member) member = svr.members.cache.find(member => member.nickname && member.nickname.toLowerCase() == str.toLowerCase())
         }
         return member;
+    }
+    findChannel = (str, svr) => {
+        let channels = svr.channels.cache;
+        str = str.trim();
+        return channels.get(str) || channels.find(c => c.name.toLowerCase() == str.toLowerCase() || c.toString() == str);
     }
     getEmbedColor = (svr, altColor) => {
         let color;
         const member = svr.member(this.user);
-        if(member.displayColor == 0) {
+        if (member.displayColor == 0) {
             color = altColor || this.configJS.color_codes.BLUE
         } else {
             color = member.displayColor
@@ -78,7 +85,7 @@ module.exports = class ExtendedClient extends Client {
                 this.log.debug(`Loading event: ${pathto}`)
                 this.clearCache(pathto)
                 const evt = new (require(pathto))(this)
-                if(evt.info.type == "Discord") {
+                if (evt.info.type == "Discord") {
                     this.discordEvents.set(evt.info.title, evt)
                 } else if (evt.info.type == "Process") {
                     this.processEvents.set(evt.info.title, evt)

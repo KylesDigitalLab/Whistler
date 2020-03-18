@@ -8,7 +8,7 @@ module.exports = class messageDelete extends Event {
             type: `Discord`
         })
     }
-    run = async (db, msg) => {
+    handle = async (db, msg) => {
         const [svr, usr, ch] = [msg.guild, msg.author, msg.channel]
         this.bot.log.silly(`Message by ${usr.tag} deleted in channel #${ch.name} in ${svr.name}`, {
             svr_id: svr.id,
@@ -19,37 +19,44 @@ module.exports = class messageDelete extends Event {
         const serverData = await db.servers.findOne({
             _id: svr.id
         })
-        if(serverData.config.log.isEnabled) {
-            const channel = await this.bot.channels.fetch(serverData.config.log.channel_id)
-            await channel.send({
-                embed: {
-                    thumbnail: {
-                        url: usr.avatarURL()
-                    },
-                    color: this.bot.configJS.color_codes.YELLOW,
-                    title: `⚠️ Message Deleted:`,
-                    description: `**${usr.tag}**'s message has been deleted:`,
-                    fields: [
-                        {
-                            name: `✉️ Content:`,
-                            value: msg.content,
-                            inline: true
+        if(serverData) {
+            if(serverData.config.log.enabled) {
+                const channel = await this.bot.channels.fetch(serverData.config.log.channel_id)
+                await channel.send({
+                    embed: {
+                        thumbnail: {
+                            url: usr.avatarURL()
                         },
-                        {
-                            name: `🆔:`,
-                            value: msg.id,
-                            inline: true
-                        },
-                        {
-                            name: `📨 Sent:`,
-                            value: moment(msg.createdTimestamp).format(serverData.config.date_format),
-                            inline: true
+                        color: this.bot.configJS.color_codes.YELLOW,
+                        title: `⚠️ Message Deleted:`,
+                        description: `**${usr.tag}**'s message has been deleted:`,
+                        fields: [
+                            {
+                                name: `✉️ Content:`,
+                                value: msg.content || `\`No Content\``,
+                                inline: true
+                            },
+                            {
+                                name: `🆔:`,
+                                value: msg.id,
+                                inline: true
+                            },
+                            {
+                                name: `📨 Sent:`,
+                                value: moment(msg.createdTimestamp).format(serverData.config.date_format),
+                                inline: true
+                            }
+                        ],
+                        footer: {
+                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverData.config.date_format)}`
                         }
-                    ],
-                    footer: {
-                        text: `User ID: ${usr.id} | ${moment(new Date()).format(serverData.config.date_format)}`
                     }
-                }
+                })
+            }
+        } else {
+            this.bot.log.error(`Could not find server data for ${svr.name}`, {
+                svr_id: svr.name,
+                serverData: serverData
             })
         }
     }

@@ -36,12 +36,12 @@ driver.initialize(config.db_url).then(async () => {
     
 
     bot.once('ready', () => {
-        bot.events.discord.get(`ready`).run(db).catch(err => {
+        bot.events.discord.get(`ready`).handle(db).catch(err => {
             bot.log.error(`Failed to handle event 'ready':\r\n`, err)
         })
     })
     bot.on('message', msg => {
-        bot.events.discord.get(`message`).run(db, msg).catch(err => {
+        bot.events.discord.get(`message`).handle(db, msg).catch(err => {
             bot.log.error(`Failed to handle event 'message':\r\n`, {
                 svr_id: msg.guild.id,
                 usr_id: msg.author.id,
@@ -50,7 +50,7 @@ driver.initialize(config.db_url).then(async () => {
         })
     })
     bot.on('messageDelete', msg => {
-        bot.events.discord.get(`messageDelete`).run(db, msg).catch(err => {
+        bot.events.discord.get(`messageDelete`).handle(db, msg).catch(err => {
             bot.log.error(`Failed to handle event 'messageDelete':\r\n`, {
                 svr_id: msg.guild.id,
                 usr_id: msg.author.id,
@@ -59,7 +59,7 @@ driver.initialize(config.db_url).then(async () => {
         })
     })
     bot.on(`channelCreate`, ch => {
-        bot.events.discord.get('channelCreate').run(db, ch).catch(err => {
+        bot.events.discord.get('channelCreate').handle(db, ch).catch(err => {
             bot.log.error(`Failed to handle event 'channelCreate':\r\n`, {
                 ch_id: ch.id,
                 svr_id: ch.guild.id
@@ -67,7 +67,7 @@ driver.initialize(config.db_url).then(async () => {
         })
     })
     bot.on(`channelDelete`, ch => {
-        bot.events.discord.get('channelDelete').run(db, ch).catch(err => {
+        bot.events.discord.get('channelDelete').handle(db, ch).catch(err => {
             bot.log.error(`Failed to handle event 'channelDelete':\r\n`, {
                 ch_id: ch.id,
                 svr_id: ch.guild.id
@@ -75,14 +75,14 @@ driver.initialize(config.db_url).then(async () => {
         })
     })
     bot.on(`guildCreate`, svr => {
-        bot.events.discord.get('guildCreate').run(db, svr).catch(err => {
+        bot.events.discord.get('guildCreate').handle(db, svr).catch(err => {
             bot.log.error(`Failed to handle event 'guildCreate':\r\n`, {
                 svr_id: svr.id
             }, err)
         })
     })
     bot.on(`guildMemberAdd`, member => {
-        bot.events.discord.get('guildMemberAdd').run(db, member).catch(err => {
+        bot.events.discord.get('guildMemberAdd').handle(db, member).catch(err => {
             bot.log.error(`Failed to handle event 'guildMemberAdd':\r\n`, {
                 svr_id: member.guild.id,
                 usr_id: member.user.id
@@ -90,7 +90,7 @@ driver.initialize(config.db_url).then(async () => {
         })
     })
     bot.on(`guildMemberRemove`, member => {
-        bot.events.discord.get('guildMemberRemove').run(db, member).catch(err => {
+        bot.events.discord.get('guildMemberRemove').handle(db, member).catch(err => {
             bot.log.error(`Failed to handle event 'guildMemberRemove':\r\n`, {
                 svr_id: member.guild.id,
                 usr_id: member.user.id
@@ -98,7 +98,7 @@ driver.initialize(config.db_url).then(async () => {
         })
     })
     bot.on(`guildBanAdd`, (svr, usr) => {
-        bot.events.discord.get('guildBanAdd').run(db, svr, usr).catch(err => {
+        bot.events.discord.get('guildBanAdd').handle(db, svr, usr).catch(err => {
             bot.log.error(`Failed to handle event 'guildBanAdd':\r\n`, {
                 svr_id: svr.id,
                 usr_id: usr.id
@@ -109,7 +109,7 @@ driver.initialize(config.db_url).then(async () => {
         bot.log.warn(`Rate limit hit:\r\n`, info)
     })
     bot.on(`debug`, d => {
-        bot.events.discord.get(`debug`).run(d).catch(err => {
+        bot.events.discord.get(`debug`).handle(d).catch(err => {
             bot.log.error(`Failed to handle event 'debug':\r\n`, err, d)
         })
     })
@@ -126,9 +126,19 @@ driver.initialize(config.db_url).then(async () => {
 }).catch(err => bot.log.error('Failed to connect to MongoDB database\r\n', err))
 
 process.on('unhandledRejection', err => {
-    bot.events.process.get(`unhandledRejection`).run(err)
+    bot.events.process.get(`unhandledRejection`).handle(err)
 })
 
 process.on('uncaughtException', err => {
     bot.log.error(`Uncaught exception:\r\n`, err)
+})
+
+Object.defineProperty(Boolean.prototype, `humanize`, {
+    value: () => {
+        if(this) {
+            return "enabled";
+        } else {
+            return "disabled";
+        }
+    }
 })

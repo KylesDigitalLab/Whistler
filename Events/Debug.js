@@ -7,5 +7,5 @@ module.exports = class DebugEvent extends Event {
             type: `Discord`
         })
     }
-    run = async info => this.bot.log.verbose(info)
+    handle = async info => this.bot.log.verbose(info)
 }

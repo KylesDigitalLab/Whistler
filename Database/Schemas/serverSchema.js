@@ -35,7 +35,7 @@ module.exports = new Schema({
         },
         moderation: {
             log: {
-                isEnabled: {
+                enabled: {
                     type: Boolean,
                     default: false
                 },
@@ -45,7 +45,7 @@ module.exports = new Schema({
             }
         },
         log: {
-            isEnabled: {
+            enabled: {
                 type: Boolean,
                 default: false
             },
@@ -90,9 +90,9 @@ module.exports = new Schema({
             type: String,
             required: true
         },
-        isBotDisabled: {
+        bot_enabled: {
             type: Boolean,
-            default: false
+            default: true
         }
     })],
     messages_today: {
