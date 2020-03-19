@@ -10,7 +10,7 @@ module.exports = class Google extends Command {
             category: `misc`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
             const items = await google({
                 query: suffix,

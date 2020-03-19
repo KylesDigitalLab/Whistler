@@ -28,9 +28,9 @@ module.exports = class EventManager extends Manager {
                     this.process.set(evt.info.title, evt)
                 }
             } catch (err) {
-                this.bot.log.error(`Failed to load event '${evtFile}':\r\n`, err)
+                this.bot.log.error(`Failed to load event '${evtFile}'!`, err)
             } finally {
-                this.bot.log.debug(`Successfully loaded event '${evtFile.split(".")[0]}'`)
+                this.bot.log.debug(`Successfully loaded event ${evtFile.split(".")[0]}`)
             }
         })
     }

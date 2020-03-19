@@ -10,10 +10,10 @@ module.exports = class ServerLogCommand extends Command {
             category: `util`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
             if (suffix.trim().toLowerCase() == "disable") {
-                serverData.config.log.enabled = false;
+                serverDocument.config.log.enabled = false;
                 await msg.channel.send({
                     embed: {
                         color: this.bot.configJS.color_codes.YELLOW,
@@ -26,11 +26,11 @@ module.exports = class ServerLogCommand extends Command {
                 if (ch) {
                     if (ch.type == "text") {
                         let wasDisabled;
-                        if (!serverData.config.log.enabled) {
+                        if (!serverDocument.config.log.enabled) {
                             wasDisabled = true;
-                            serverData.config.log.enabled = true;
+                            serverDocument.config.log.enabled = true;
                         }
-                        serverData.config.log.channel_id = ch.id;
+                        serverDocument.config.log.channel_id = ch.id;
                         await msg.channel.send({
                             embed: {
                                 color: this.bot.getEmbedColor(msg.guild),
@@ -65,18 +65,21 @@ module.exports = class ServerLogCommand extends Command {
             }
         } else {
             try {
-                const ch = await this.bot.channels.fetch(serverData.config.log.channel_id)
+                let ch;
+                if(serverDocument.config.log.enabled) {
+                    ch = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
+                }
                 await msg.channel.send({
                     embed: {
                         color: this.bot.getEmbedColor(msg.guild),
                         title: `📜 Server Log Information:`,
-                        description: `The server log is currently **${serverData.config.log.enabled ? `enabled** and set to ${ch.toString()}` : "disabled**"}.`
+                        description: `The server log is currently **${serverDocument.config.log.enabled ? `enabled** and set to ${ch.toString()}` : "disabled**"}.`
                     }
                 })
             } catch(err) {
                 this.bot.log.warn(`Could not get log channel for ${msg.guild.name}:\r\n`, {
                     svr_id: msg.guild.id,
-                    ch_id: serverData.config.log.channel_id
+                    ch_id: serverDocument.config.log.channel_id
                 },  err)
                 await msg.channel.send({
                     embed: {

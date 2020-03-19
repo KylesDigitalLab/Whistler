@@ -1,30 +1,37 @@
 const util = require("util")
 const { Command } = require("./../Structures")
+const Stopwatch = require("../Modules/Utils/Stopwatch")
 
 module.exports = class Eval extends Command {
     constructor(bot) {
         super(bot, {
             title: `eval`,
             aliases: [`execute`, `run`],
-            description: "FOR BOT ADMINISTRATORS ONLY! Executes Node.js code.",
+            description: "Executes Node.js code.",
             category: `admin`,
             restricted: true
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
+            const timer = new Stopwatch();
             try {
                 let result = eval(suffix);
-                if (typeof result == "object") result = util.inspect(result)
-                msg.channel.send({
+                if (typeof result == "object") {
+                    result = util.inspect(result)
+                }
+                timer.stop()
+                await msg.channel.send({
                     embed: {
                         color: this.bot.getEmbedColor(msg.guild),
-                        title: "Eval Result:",
-                        description: `\`\`\`js\n${result}\`\`\``
+                        description: `\`\`\`js\n${result}\`\`\``,
+                        footer: {
+                            text: `Execution time: ${Math.round(timer.duration / 2)}ms.`
+                        }
                     }
-                }).catch(err => {
+                }).catch(async err => {
                     this.bot.log.info(result)
-                    msg.channel.send({
+                    await msg.channel.send({
                         embed: {
                             color: this.bot.configJS.color_codes.RED,
                             title: "❌ Error Sending Result:",
@@ -36,13 +43,19 @@ module.exports = class Eval extends Command {
                     })
                 })
             } catch (err) {
-                msg.channel.send({
+                timer.stop()
+                await msg.channel.send({
                     embed: {
                         color: this.bot.configJS.color_codes.RED,
-                        title: "Eval Result:",
-                        description: `\`\`\`js\n${err}\`\`\``
+                        description: `\`\`\`js\n${err}\`\`\``,
+                        footer: {
+                            text: `Execution time: ${Math.round(timer.duration / 2)}ms`
+                        }
                     }
                 })
+            }
+            if(timer.running) {
+                timer.stop()
             }
         }
     }

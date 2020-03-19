@@ -9,7 +9,7 @@ module.exports = class Help extends Command {
             category: `main`
         })
     }
-    run = async(db, msg, serverData, userData, memberData, suffix) => {
+    run = async(db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         let embedFields = [];
         this.bot.commands.all.forEach(cmd => {
             if (!cmd.info.restricted) {

@@ -10,7 +10,7 @@ module.exports = class Server extends Command {
             category: `util`
         })
     }
-    run = async(db, msg, serverData, userData, memberData, suffix) => {
+    run = async(db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         let svr = msg.guild;
         let [userCount, botCount] = [svr.members.cache.filter(m => !m.user.bot).size, svr.members.cache.filter(m => m.user.bot).size]
         await msg.channel.send({
@@ -53,7 +53,7 @@ module.exports = class Server extends Command {
                     },
                     {
                         name: `🗓️ Created:`,
-                        value: `${moment(svr.createdAt).format(serverData.config.date_format)} (${moment(svr.createdAt).fromNow()})`,
+                        value: `${moment(svr.createdAt).format(serverDocument.config.date_format)} (${moment(svr.createdAt).fromNow()})`,
                         inline: true
                     }
                 ]

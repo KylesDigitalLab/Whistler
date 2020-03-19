@@ -10,11 +10,11 @@ module.exports = class Weather extends Command {
             category: `misc`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
             find({
                 search: suffix,
-                degreeType: serverData.config.units.temperature
+                degreeType: serverDocument.config.units.temperature
             }, (err, res) => {
                 if (err || !res) {
                     msg.channel.send({

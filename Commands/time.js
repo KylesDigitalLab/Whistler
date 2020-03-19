@@ -12,7 +12,7 @@ module.exports = class Time extends Command {
             category: `misc`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         let address;
         if(suffix) {
             if(suffix.indexOf("<@") == 0) {
@@ -40,7 +40,7 @@ module.exports = class Time extends Command {
                 address = encodeURIComponent(suffix);
             }
         } else {
-            address = userData.location;
+            address = userDocument.location;
         }
         if (address) {
             const reponse = await get(`https://maps.googleapis.com/maps/api/geocode/json`, {

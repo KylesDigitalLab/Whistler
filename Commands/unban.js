@@ -10,7 +10,7 @@ module.exports = class Unban extends Command {
             category: `mod`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         let member, reason;
         if(suffix) {
             if (suffix.indexOf("|") > -1 && suffix.length > 3) {

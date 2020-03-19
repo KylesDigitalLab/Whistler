@@ -19,9 +19,9 @@ module.exports = class CommandManager extends Manager {
                 this.all.set(cmd.info.title, cmd)
                 cmd.info.aliases.forEach(a => this.aliases.set(a, cmd.info.title))
             } catch (err) {
-                this.bot.log.error(`Failed to load command '${cmdFile}':\r\n`, err)
+                this.bot.log.error(`Failed to load command '${cmdFile}'`, err)
             } finally {
-                this.bot.log.debug(`Successfully loaded command '${cmdFile}'`)
+                this.bot.log.debug(`Successfully loaded command '${cmdFile.split(".")[0]}'`)
             }
         })
     }

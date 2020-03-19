@@ -13,7 +13,7 @@ module.exports = class Youtube extends Command {
             category: `misc`
         })
     }
-    run = async(db, msg, serverData, userData, memberData, suffix) => {
+    run = async(db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
             youtube.setKey(auth.keys.youtubeAPI)
             youtube.search(suffix, 1, async(err, res) => {

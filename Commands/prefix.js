@@ -10,10 +10,10 @@ module.exports = class Prefix extends Command {
             category: `util`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
             if (suffix.length < 10) {
-                serverData.config.prefix = suffix;
+                serverDocument.config.prefix = suffix;
                 await msg.channel.send({
                     embed: {
                         color: this.bot.getEmbedColor(msg.guild),

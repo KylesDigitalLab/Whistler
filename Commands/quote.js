@@ -10,7 +10,7 @@ module.exports = class User extends Command {
             category: `util`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if (suffix) {
             let chID, mID;
             let args = suffix.trim().split(" ")
@@ -36,7 +36,7 @@ module.exports = class User extends Command {
                             url: `${m.embeds[0] && m.embeds[0].url ? m.embeds[0].url : ""}`
                         },
                         footer: {
-                            text: moment(m.createdTimestamp).format(serverData.config.date_format)
+                            text: moment(m.createdTimestamp).format(serverDocument.config.date_format)
                         }
                     }
                 })

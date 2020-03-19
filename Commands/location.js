@@ -9,9 +9,9 @@ module.exports = class Location extends Command {
             category: `util`
         })
     }
-    run = async(db, msg, serverData, userData, memberData, suffix) => {
+    run = async(db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         if(suffix) {
-            userData.location = suffix.trim();
+            userDocument.location = suffix.trim();
             msg.channel.send({
                 embed: {
                     color: this.bot.getEmbedColor(msg.guild),
@@ -19,11 +19,11 @@ module.exports = class Location extends Command {
                 }
             })
         } else {
-            if(userData.location) {
+            if(userDocument.location) {
                 msg.channel.send({
                     embed: {
                         color: this.bot.getEmbedColor(msg.guild),
-                        description: `Your location is **${userData.location}**.`
+                        description: `Your location is **${userDocument.location}**.`
                     }
                 })
             } else {

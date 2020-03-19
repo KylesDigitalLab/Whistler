@@ -22,10 +22,10 @@ module.exports = new Schema({
         },
         date_format: {
             type: String,
-            default: `MMMM Do, YYYY, h:mm:ss a`
+            default: configJS.date_format
         },
         commands: {
-            delete_cmd_msg: {
+            delete_messages: {
                 type: Boolean,
                 default: false
             },

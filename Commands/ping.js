@@ -1,5 +1,5 @@
 const { Command } = require("./../Structures")
-const Stopwatch = require("./../Modules/Stopwatch")
+const Stopwatch = require("./../Modules/Utils/Stopwatch")
 
 module.exports = class Ping extends Command {
     constructor(bot) {
@@ -10,7 +10,7 @@ module.exports = class Ping extends Command {
             category: `main`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         const timer = new Stopwatch();
         const m = await msg.channel.send(`🏓 Pinging...`)
         timer.stop()
@@ -18,7 +18,7 @@ module.exports = class Ping extends Command {
             embed: {
                 color: this.bot.getEmbedColor(msg.guild),
                 title: "🏓 Pong!",
-                description: `Took **${Math.round(timer.duration / 2)}**ms.`
+                description: `Took **${Math.round(timer.duration / 2)}**ms. Websocket ping is **${this.bot.ws.ping}**ms.`
             }
         })
     }

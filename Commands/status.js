@@ -10,7 +10,7 @@ module.exports = class Status extends Command {
             category: `util`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         let member;
         if (!suffix || suffix.toLowerCase() == "me") {
             member = msg.member
@@ -52,7 +52,7 @@ module.exports = class Status extends Command {
                     if (game.timestamps) {
                         embedFields.push({
                             name: `Started:`,
-                            value: moment(game.timestamps.start).format(serverData.config.date_format),
+                            value: moment(game.timestamps.start).format(serverDocument.config.date_format),
                             inline: true
                         })
                     }

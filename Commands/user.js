@@ -10,22 +10,22 @@ module.exports = class User extends Command {
             category: `util`
         })
     }
-    run = async (db, msg, serverData, userData, memberData, suffix) => {
+    run = async (db, msg, serverDocument, userDocument, memberDocument, suffix) => {
         let member;
         if (!suffix || suffix.toLowerCase() == "me") {
             member = msg.member
         } else {
             member = this.bot.getMember(suffix, msg.guild)
-            if(member) memberData = serverData.members.id(member.user.id)
-            if (!memberData) {
+            if(member) memberDocument = serverDocument.members.id(member.user.id)
+            if (!memberDocument) {
                 this.bot.log.debug(`Member data not found, creating now...`, {
                     usr_id: member.user.id,
                     svr_id: msg.guild.id
                 })
-                serverData.members.push({
+                serverDocument.members.push({
                     _id: member.user.id
                 })
-                memberData = serverData.members.id(member.user.id)
+                memberDocument = serverDocument.members.id(member.user.id)
             }
         }
         if (member) {
@@ -80,22 +80,22 @@ module.exports = class User extends Command {
                         },
                         {
                             name: `💬 Messages:`,
-                            value: memberData.message_count,
+                            value: memberDocument.message_count,
                             inline: true
                         },
                         {
                             name: `Last Active:`,
-                            value: `${moment(memberData.last_active).format(serverData.config.date_format)} (${moment(memberData.last_active).fromNow()})`,
+                            value: `${moment(memberDocument.last_active).format(serverDocument.config.date_format)} (${moment(memberDocument.last_active).fromNow()})`,
                             inline: true
                         },
                         {
                             name: `📆 Created:`,
-                            value: `${moment(user.createdAt).format(serverData.config.date_format)} (${moment(user.createdAt).fromNow()})`,
+                            value: `${moment(user.createdAt).format(serverDocument.config.date_format)} (${moment(user.createdAt).fromNow()})`,
                             inline: true
                         },
                         {
                             name: `🗓️ Joined:`,
-                            value: `${moment(member.joinedAt).format(serverData.config.date_format)} (${moment(member.joinedAt).fromNow()})`,
+                            value: `${moment(member.joinedAt).format(serverDocument.config.date_format)} (${moment(member.joinedAt).fromNow()})`,
                             inline: true
                         }
                     ], 

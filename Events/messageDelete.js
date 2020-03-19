@@ -16,12 +16,11 @@ module.exports = class messageDelete extends Event {
             msg_id: msg.id,
             msg_content: msg.content
         })
-        const serverData = await db.servers.findOne({
-            _id: svr.id
-        })
-        if(serverData) {
-            if(serverData.config.log.enabled) {
-                const channel = await this.bot.channels.fetch(serverData.config.log.channel_id)
+        await svr.populateDocument()
+        const serverDocument = svr.serverDocument;
+        if (serverDocument) {
+            if (serverDocument.config.log.enabled) {
+                const channel = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
                 await channel.send({
                     embed: {
                         thumbnail: {
@@ -43,20 +42,20 @@ module.exports = class messageDelete extends Event {
                             },
                             {
                                 name: `📨 Sent:`,
-                                value: moment(msg.createdTimestamp).format(serverData.config.date_format),
+                                value: moment(msg.createdTimestamp).format(serverDocument.config.date_format),
                                 inline: true
                             }
                         ],
                         footer: {
-                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverData.config.date_format)}`
+                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverDocument.config.date_format)}`
                         }
                     }
                 })
             }
         } else {
-            this.bot.log.error(`Could not find server data for ${svr.name}`, {
+            this.bot.log.error(`Could not find server document for ${svr.name}`, {
                 svr_id: svr.name,
-                serverData: serverData
+                serverDocument: serverDocument
             })
         }
     }

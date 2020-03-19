@@ -13,12 +13,11 @@ module.exports = class guildBanAdd extends Event {
             svr_id: svr.id,
             usr_id: usr.id
         })
-        const serverData = await db.servers.findOne({
-            _id: svr.id
-        })
-        if(serverData) {
-            if(serverData.config.log.enabled) {
-                const ch = await this.bot.channels.fetch(serverData.config.log.channel_id)
+        await svr.populateDocument()
+        const serverDocument = svr.serverDocument;
+        if (serverDocument) {
+            if (serverDocument.config.log.enabled) {
+                const ch = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
                 await ch.send({
                     embed: {
                         thumbnail: {
@@ -28,15 +27,15 @@ module.exports = class guildBanAdd extends Event {
                         title: `🔨 Member Banned`,
                         description: `**${usr.tag}** has been banned from the server.`,
                         footer: {
-                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverData.config.date_format)}`
+                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverDocument.config.date_format)}`
                         }
                     }
                 })
             }
         } else {
-            this.bot.log.error(`Could not find server data for ${svr.name}`, {
+            this.bot.log.error(`Could not find server document for ${svr.name}`, {
                 svr_id: svr.name,
-                serverData: serverData
+                serverDocument: serverDocument
             })
         }
     }

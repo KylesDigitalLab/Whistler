@@ -1,4 +1,5 @@
 const setupNewServer = require("./../Modules/setupNewServer")
+const WebSocket = require("../Web/WebSocket")
 const { Event } = require("../Structures")
 
 module.exports = class Ready extends Event {
@@ -14,47 +15,44 @@ module.exports = class Ready extends Event {
         })
         this.bot.guilds.cache.forEach(async svr => {
             try {
-                const serverData = await db.servers.findOne({
-                    _id: svr.id
-                })
-                if (serverData) {
-                    this.bot.log.debug(`Database entry OK for ${svr.name}\r\n`, {
+                await svr.populateDocument()
+                const serverDocument = svr.serverDocument;
+                if (serverDocument) {
+                    this.bot.log.verbose(`Server document is OK for ${svr.name}`, {
                         svr_id: svr.id
                     })
                 } else {
-                    this.bot.log.warn(`Server data not found for ${svr.name}, creating data...\r\n`, {
+                    this.bot.log.warn(`Server document not found for ${svr.name}, creating document`, {
                         svr_id: svr.id
                     })
                     try {
-                        const serverData = await setupNewServer(this.bot, svr, new db.servers({
+                        const serverDocument = await setupNewServer(this.bot, svr, new db.servers({
                             _id: svr.id
                         }))
-                        await db.servers.create(serverData)
-                        this.bot.log.info(`Successfully created server data for ${svr.name}\r\n`, {
+                        await db.servers.create(serverDocument)
+                        this.bot.log.info(`Successfully created server document for ${svr.name}`, {
                             svr_id: svr.id
                         })
                     } catch (err) {
-                        this.bot.log.error(`Failed to create server data for ${svr.name}`, {
+                        this.bot.log.error(`Failed to create server document for ${svr.name}`, {
                             svr_id: svr.id
                         }, err)
                     }
                 }
             } catch (err) {
-                this.bot.log.error(`Failed to get server data for '${svr.name}'\r\n`, {
+                this.bot.log.error(`Failed to get server document for '${svr.name}'`, {
                     svr_id: svr.id
                 }, err)
             }
         })
 
-        const presence = this.bot.configJS.getPresence(this.bot)
         try {
-            const presenceData = await this.bot.user.setPresence(presence)
-            this.bot.log.debug(`Set presence data\r\n`, presenceData || ``)
+            const presenceData = await this.bot.user.setPresence(this.bot.configJS.getPresence(this.bot))
+            this.bot.log.verbose(`Successfully set presence data`)
         } catch (err) {
-            this.bot.log.error("Failed to set presence", {
-                Presence: presence
-            }, err)
+            this.bot.log.error("Failed to set presence", err)
         }
+        const web = new WebSocket(this.bot);
         String.prototype.capitalize = str => str.toString().replace(/^\w/, s => s.toUpperCase())
     }
 }

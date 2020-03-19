@@ -11,7 +11,7 @@ module.exports = class Info extends Command {
             category: `util`
         })
     }
-    run = async(db, msg, serverData, userData, memberData, suffix) => {
+    run = async(db, msg, serverDocument, userDocument, memberDocument, suffix) => {
        await msg.channel.send({
             embed: {
                 color: this.bot.getEmbedColor(msg.guild),
