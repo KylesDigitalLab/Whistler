@@ -1,30 +1,30 @@
 const { Event } = require("../Structures")
 const moment = require("moment")
+const { Constants } = require("../Internals")
 
 module.exports = class guildMemberRemove extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `guildMemberRemove`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    handle = async (db, member) => {
+    async handle(member) {
         const [svr, usr] = [member.guild, member.user];
-        this.bot.log.debug(`User ${usr.tag} left or was kicked from server '${svr.name}'`, {
+        this.client.log.debug(`User ${usr.tag} left or was kicked from server '${svr.name}'`, {
             svr_id: svr.id,
             usr_id: usr.id
         })
-        await svr.populateDocument()
-        const serverDocument = svr.serverDocument;
+        const serverDocument = await svr.populateDocument()
         if (serverDocument) {
             if (serverDocument.config.log.enabled) {
-                const ch = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
+                const ch = await this.client.channels.fetch(serverDocument.config.log.channel_id)
                 await ch.send({
                     embed: {
                         thumbnail: {
                             url: usr.avatarURL()
                         },
-                        color: this.bot.getEmbedColor(svr, this.bot.configJS.color_codes.YELLOW),
+                        color: this.client.getEmbedColor(svr, Constants.Colors.WARNING),
                         title: `👤 Member Left`,
                         description: `**${usr.tag}** has left or been kicked from the server.`,
                         footer: {
@@ -34,7 +34,7 @@ module.exports = class guildMemberRemove extends Event {
                 })
             }
         } else {
-            this.bot.log.error(`Could not find server document for ${svr.name}`, {
+            this.client.log.error(`Could not find server document for ${svr.name}`, {
                 svr_id: svr.name,
                 serverDocument: serverDocument
             })

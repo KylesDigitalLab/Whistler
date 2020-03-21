@@ -2,17 +2,17 @@ const { Event } = require("../Structures")
 const { DiscordAPIError } = require("discord.js")
 
 module.exports = class unhandledRejection extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `unhandledRejection`,
-            type: `Process`
+            type: `process`
         })
     }
-    handle = async err => {
+    async handle (err) {
         if(err instanceof DiscordAPIError) {
-            this.bot.log.warn(`Discord API Error:\r\n`, err)
+            this.client.log.warn(`Discord API Error:`, err)
         } else {
-            this.bot.log.error(`Unhandled Rejection:\r\n`, err)
+            this.client.log.warn(`Unhandled Rejection:`, err)
         }
     }
 }

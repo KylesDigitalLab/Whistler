@@ -1,11 +1,13 @@
 const { Event } = require("../Structures")
 
 module.exports = class Warn extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `warn`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    handle = async warning => this.bot.log.warn(`Client warning:\r\n`, warning)
+    async handle(info) {
+        this.client.log.warn(info)
+    }
 }

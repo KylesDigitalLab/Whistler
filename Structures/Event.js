@@ -1,14 +1,14 @@
 module.exports = class Event {
     /**
-     * @param {*} bot 
+     * @param {*} client 
      * @param {Object} data
      */
-    constructor(bot, data) {
-        Object.defineProperty(this, `bot`, {
-            value: bot,
+    constructor(client, data) {
+        Object.defineProperty(this, `client`, {
+            value: client,
             enumerable: false,
             writeable: false
         });
-        this.info = data;
+        this.data = data;
     }
 }

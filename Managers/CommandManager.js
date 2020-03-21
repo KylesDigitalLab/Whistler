@@ -1,35 +1,104 @@
-const Manager  = require("../Structures/Manager")
+const Manager = require("../Structures/Manager")
 const { Collection } = require("discord.js");
 const { readdir } = require("fs").promises
+const { Constants } = require("../Internals")
+const clearModuleCache = require("./clearModuleCache")
 
 module.exports = class CommandManager extends Manager {
-    constructor(bot) {
-        super(bot);
-        this.all = new Collection();
-        this.aliases = new Collection();
+    constructor(client) {
+        super(client);
+        this.public = {
+            all: new Collection(),
+            aliases: new Collection()
+        }
+        this.private = {
+            all: new Collection(),
+            aliases: new Collection()
+        }
+        this.shared = {
+            all: new Collection(),
+            aliases: new Collection()
+        }
+        this.categories = new Collection();
+        Constants.CommandCategories.forEach(c => this.categories.set(c.name, c))
+        
     }
-    loadAll = async() => {
-        const commands = await readdir(`./Commands`)
+    async loadAllPublic() {
+        const commands = await readdir(`./Commands/Public`)
         commands.forEach(cmdFile => {
             try {
-                const path = `../Commands/${cmdFile}`
-                this.bot.log.silly(`Loading command: ${path}`)
-                this.bot.clearCache(path)
-                const cmd = new (require(path))(this.bot)
-                this.all.set(cmd.info.title, cmd)
-                cmd.info.aliases.forEach(a => this.aliases.set(a, cmd.info.title))
+                let path = `../Commands/Public/${cmdFile}`
+                clearModuleCache(path)
+                const cmd = new (require(path))(this.client)
+                this.public.all.set(cmd.data.title, cmd)
+                cmd.data.aliases.forEach(a => this.public.aliases.set(a, cmd.data.title))
             } catch (err) {
-                this.bot.log.error(`Failed to load command '${cmdFile}'`, err)
-            } finally {
-                this.bot.log.debug(`Successfully loaded command '${cmdFile.split(".")[0]}'`)
+                this.client.log.error(`Failed to load public command ${cmdFile}`, err)
             }
         })
+        return this;
     }
-    check = (msg, serverDocument) => {
-        let str;
+    async loadAllPrivate() {
+        const commands = await readdir(`./Commands/Private`)
+        commands.forEach(cmdFile => {
+            try {
+                let path = `../Commands/Private/${cmdFile}`
+                clearModuleCache(path)
+                const cmd = new (require(path))(this.client)
+                this.private.all.set(cmd.data.title, cmd)
+                cmd.data.aliases.forEach(a => this.private.aliases.set(a, cmd.data.title))
+            } catch (err) {
+                this.client.log.error(`Failed to load private command ${cmdFile}`, err)
+            }
+        })
+        return this;
+    }
+    async loadAllShared() {
+        const commands = await readdir(`./Commands/Shared`)
+        commands.forEach(cmdFile => {
+            try {
+                let path = `../Commands/Shared/${cmdFile}`
+                clearModuleCache(path)
+                const cmd = new (require(path))(this.client)
+                this.shared.all.set(cmd.data.title, cmd)
+                cmd.data.aliases.forEach(a => this.shared.aliases.set(a, cmd.data.title))
+            } catch (err) {
+                this.client.log.error(`Failed to load shared command ${cmdFile}`, err)
+            }
+        })
+        return this;
+    }
+    async loadAll() {
+        await this.loadAllPublic()
+        await this.loadAllPrivate()
+        await this.loadAllShared()
+        return this;
+    }
+    getPublic(str) {
+        return this.public.all.get(str) || this.public.all.get(this.public.aliases.get(str))
+    }
+    getPrivate(str) {
+        return this.private.all.get(str) || this.private.all.get(this.private.aliases.get(str))
+    }
+    getShared(str) {
+        return this.shared.all.get(str) || this.shared.all.get(this.shared.aliases.get(str))
+    }
+    getPrefix(serverDocument) {
+        return `${serverDocument ? serverDocument.config.prefix : this.client.config.default_prefix}`
+    }
+    check(msg, serverDocument) {
+        let str, prefix;
+        if(!serverDocument) {
+            prefix = this.client.config.default_prefix
+        } else {
+            prefix = serverDocument.config.prefix
+        }
         msg = msg.trim()
-        if (msg.indexOf(serverDocument.config.prefix) == 0) str = msg.substring(serverDocument.config.prefix.length)
-        else return;
+        if (msg.indexOf(prefix) == 0) {
+            str = msg.substring(prefix.length)
+        } else {
+            return;
+        }
         if (str.indexOf(" ") == -1) {
             return {
                 command: str.toLowerCase(),

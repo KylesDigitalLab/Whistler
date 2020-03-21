@@ -1,11 +1,13 @@
 const { Event } = require("../Structures")
 
 module.exports = class DebugEvent extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `debug`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    handle = async info => this.bot.log.verbose(info)
+    async handle(info) {
+        this.client.log.verbose(info)
+    }
 }

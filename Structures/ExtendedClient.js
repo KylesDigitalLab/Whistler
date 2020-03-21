@@ -1,7 +1,10 @@
-const { Client, Collection } = require("discord.js");
+const { Client, Collection, version: djsVersion } = require("discord.js");
 const { CommandManager, EventManager } = require("../Managers")
+const { platform, release } = require("os")
 const { readdir } = require("fs").promises
 const { Logger } = require("winston")
+const {models: db} = require("mongoose")
+const { Constants } = require("../Internals")
 
 /** 
  * Represents a Discord client
@@ -18,6 +21,9 @@ module.exports = class ExtendedClient extends Client {
         } else {
             super()
         }
+
+        this.initializedAt = Date.now();
+
         this.log = new Logger(configJS.winston);
 
         Object.defineProperties(this, {
@@ -32,6 +38,7 @@ module.exports = class ExtendedClient extends Client {
                 writeable: false
             }
         })
+        this.db = db;
         /**
          * @type {EventManager}
          */
@@ -40,76 +47,20 @@ module.exports = class ExtendedClient extends Client {
          * @type {CommandManager}
          */
         this.commands = new CommandManager(this);
+
+        this.log.info(`Extended Discord client initialized - running Node.js ${process.version} on ${platform()} ${release()} with Discord.js ${djsVersion}`)
     }
-    getMember = (str, svr) => {
-        let member;
-        str = str.trim();
-        if (str.indexOf("<@!") == 0) {
-            member = svr.members.cache.get(str.substring(3, str.length - 1));
-        } else if (str.indexOf("<@") == 0) {
-            member = svr.members.cache.get(str.substring(2, str.length - 1));
-        } else if (!isNaN(str)) {
-            member = svr.members.cache.get(str);
-        } else {
-            if (str.indexOf("@") == 0) str = str.slice(1)
-            if (str.lastIndexOf("#") == str.length - 5 && !isNaN(str.substring(str.lastIndexOf("#") + 1))) {
-                member = svr.members.filter(member => member.user.username == str.substring(0, str.lastIndexOf("#")))
-                    .find(member => member.user.discriminator == str.substring(str.lastIndexOf("#") + 1));
+
+    getEmbedColor(svr, color) {
+        if (svr) {
+            const member = svr.member(this.user);
+            if (member.displayColor == 0) {
+                return defaultColor;
             } else {
-                member = svr.members.cache.find(member => member.user.username.toLowerCase() == str.toLowerCase());
+                return member.displayColor
             }
-            if (!member) member = svr.members.cache.find(member => member.nickname && member.nickname.toLowerCase() == str.toLowerCase())
-        }
-        return member;
-    }
-    findChannel = (str, svr) => {
-        let channels = svr.channels.cache;
-        str = str.trim();
-        return channels.get(str) || channels.find(c => c.name.toLowerCase() == str.toLowerCase() || c.toString() == str);
-    }
-    getEmbedColor = (svr, altColor) => {
-        let color;
-        const member = svr.member(this.user);
-        if (member.displayColor == 0) {
-            color = altColor || this.configJS.color_codes.BLUE
         } else {
-            color = member.displayColor
+            return color || Constants.Colors.INFO;
         }
-        return color;
-    }
-    loadEvents = async (path) => {
-        const events = await readdir(path).catch(err => this.log.error(`Failed to read event directory:\r\n`, err))
-        events.forEach(event => {
-            try {
-                const pathto = `../${path}/${event}`
-                this.log.debug(`Loading event: ${pathto}`)
-                this.clearCache(pathto)
-                const evt = new (require(pathto))(this)
-                if (evt.info.type == "Discord") {
-                    this.discordEvents.set(evt.info.title, evt)
-                } else if (evt.info.type == "Process") {
-                    this.processEvents.set(evt.info.title, evt)
-                }
-            } catch (err) {
-                this.log.error(`Failed to load event '${event}'\r\n`, err)
-            } finally {
-                this.log.debug(`Loaded event '${event}'`)
-            }
-        })
-    }
-    clearCache = moduleId => {
-        const fullPath = require.resolve(moduleId);
-
-        if (require.cache[fullPath] && require.cache[fullPath].parent) {
-            let i = require.cache[fullPath].parent.children.length;
-
-            while (i -= 1) {
-                if (require.cache[fullPath].parent.children[i].id === fullPath) {
-                    require.cache[fullPath].parent.children.splice(i, 1);
-                }
-            }
-        }
-
-        delete require.cache[fullPath];
     }
 }

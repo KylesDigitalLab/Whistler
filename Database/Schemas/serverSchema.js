@@ -59,11 +59,18 @@ module.exports = new Schema({
             type: String,
             required: true
         },
+        blocked: {
+            type: Boolean,
+            default: false
+        },
         message_count: {
             type: Number,
             default: 0
         },
         last_active: Date,
+        afk_message: {
+            type: String
+        },
         strikes: [new Schema({
             _id: {
                 type: String,

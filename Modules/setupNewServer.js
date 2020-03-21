@@ -1,14 +1,19 @@
 
-module.exports = (bot, svr, serverData) => new Promise((resolve, reject) => {
+module.exports = async(client, svr, serverDocument) => {
     svr.members.cache.forEach(member => {
-        serverData.members.push({
+        serverDocument.members.push({
             _id: member.id
         })
     })
+    svr.channels.cache.forEach(ch => {
+        serverDocument.channels.push({
+            _id: ch.id
+        })
+    })
     svr.roles.cache.forEach(role => {
-        serverData.roles.push({
+        serverDocument.roles.push({
             _id: role.id
         })
     })
-    resolve(serverData)
-})
+    return serverDocument;
+}

@@ -1,17 +1,18 @@
 const { Event } = require("../Structures")
 const moment = require("moment")
-const Stopwatch = require("../Modules/Utils/Stopwatch")
+const { Stopwatch } = require("../Modules/Utils")
+const { Constants } = require("../Internals")
 
 module.exports = class MessageCreate extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `message`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    checkRequirements = async msg => {
-        if (msg.author.id == this.bot.user.id) {
-            this.bot.log.verbose(`Ignoring self-message.`, {
+    async checkRequirements(msg) {
+        if (msg.author.id == this.client.user.id) {
+            this.client.log.verbose(`Ignoring self-message.`, {
                 svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
                 ch_id: msg.channel.id,
                 msg_id: msg.id
@@ -19,7 +20,7 @@ module.exports = class MessageCreate extends Event {
             return false;
         }
         if (msg.author.bot) {
-            this.bot.log.verbose(`Ignoring message from bot ${msg.author.tag}.`, {
+            this.client.log.verbose(`Ignoring message from bot ${msg.author.tag}.`, {
                 svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
                 ch_id: msg.channel.id,
                 msg_id: msg.id,
@@ -28,15 +29,15 @@ module.exports = class MessageCreate extends Event {
             return false;
         }
         if (msg.type !== "DEFAULT") {
-            this.bot.log.verbose(`Ignoring non-default message.`, {
+            this.client.log.verbose(`Ignoring non-default message.`, {
                 svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
                 ch_id: msg.channel.id,
                 msg_id: msg.id
             })
             return false;
         }
-        if (this.bot.config.userBlocklist.includes(msg.author.id)) {
-            this.bot.log.verbose(`Ignoring message from blocked user ${msg.author.tag}.`, {
+        if (this.client.config.userBlocklist.includes(msg.author.id)) {
+            this.client.log.verbose(`Ignoring message from blocked user ${msg.author.tag}.`, {
                 svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
                 ch_id: msg.channel.id,
                 msg_id: msg.id,
@@ -46,25 +47,25 @@ module.exports = class MessageCreate extends Event {
         }
         return true;
     }
-    handle = async (db, msg) => {
+    async handle(msg) {
         const timer = new Stopwatch();
         if (await this.checkRequirements(msg)) {
             if (!msg.guild) {
-                this.bot.log.silly(`Received new direct message from ${msg.author.tag}`, {
+                this.client.log.silly(`Received new direct message from ${msg.author.tag}`, {
                     usr_id: msg.author.id,
                     msg_id: msg.id,
                     msg_content: msg.content
                 })
-                if (this.bot.configJS.maintainer_config.forwardDMs && !this.bot.config.maintainers.includes(msg.author.id)) {
-                    this.bot.config.maintainers.forEach(async usrID => {
-                        let user = this.bot.users.cache.get(usrID)
+                if (this.client.configJS.maintainer_config.forwardDMs && !this.client.config.maintainers.includes(msg.author.id)) {
+                    this.client.config.maintainers.forEach(async usrID => {
+                        let user = this.client.users.cache.get(usrID)
                         if (!user) {
-                            user = await this.bot.users.fetch(usrID)
+                            user = await this.client.users.fetch(usrID)
                         }
                         const DM = await user.createDM()
                         await DM.send({
                             embed: {
-                                color: this.bot.configJS.color_codes.BLUE,
+                                color: Constants.Colors.INFO,
                                 author: {
                                     name: msg.author.tag,
                                     iconURL: msg.author.avatarURL()
@@ -72,90 +73,168 @@ module.exports = class MessageCreate extends Event {
                                 title: `📨 DM Received:`,
                                 description: `\`\`\`${msg.content}\`\`\``,
                                 footer: {
-                                    text: `Message ID: ${msg.id} | User ID: ${msg.author.id} | ${moment(msg.createdTimestamp).format(this.bot.configJS.date_format)}`
+                                    text: `Message ID: ${msg.id} | User ID: ${msg.author.id} | ${moment(msg.createdTimestamp).format(this.client.configJS.date_format)}`
                                 }
                             }
                         })
                     })
                 }
+                const userDocument = await msg.author.populateDocument();
+                userDocument.last_active = Date.now()
+                const cmd = this.client.commands.check(msg.content)
+                if (cmd) {
+                    const command = this.client.commands.getPrivate(cmd.command) || this.client.commands.getShared(cmd.command)
+                    if (command) {
+                        this.client.log.info(`Treating '${msg.content}' as private command '${command.data.title}'`, {
+                            usr_id: msg.author.id
+                        })
+                        if (await command.checkPermissions(msg)) {
+                            await command.run(msg, Constants, {
+                                userDocument
+                            }, cmd.suffix).catch(err => {
+                                this.client.log.error(`Failed to run private command '${cmd.data.title}'`, {
+                                    usr_id: msg.author.id
+                                }, err)
+                                msg.channel.send(`Something went wrong!`)
+                            })
+                        }
+                    }
+                }
+                await userDocument.save()
             } else {
-                this.bot.log.silly(`New message sent by ${msg.author.tag} in ${msg.guild.name}`, {
+                this.client.log.silly(`New message sent by ${msg.author.tag} in ${msg.guild.name}`, {
                     svr_id: msg.guild.id,
                     ch_id: msg.channel.id,
                     msg_id: msg.id
                 })
-                await msg.guild.populateDocument()
-                const serverDocument = msg.guild.serverDocument;
+                const serverDocument = await msg.guild.populateDocument()
                 if (serverDocument) {
-                    let channelData = serverDocument.channels.id(msg.channel.id)
-                    if (!channelData) {
-                        this.bot.log.debug(`Channel data not found, creating now`, {
+                    let channelDocument = serverDocument.channels.id(msg.channel.id)
+                    if (!channelDocument) {
+                        this.client.log.debug(`Channel document not found, creating now`, {
                             ch_id: msg.channel.id,
                             svr_id: msg.guild.id
                         })
                         serverDocument.channels.push({
                             _id: msg.channel.id
                         })
-                        channelData = serverDocument.channels.id(msg.channel.id)
+                        channelDocument = serverDocument.channels.id(msg.channel.id)
                     }
+
                     const memberDocument = msg.member.memberDocument;
                     memberDocument.last_active = Date.now()
                     memberDocument.message_count++;
-                    const userDocument = await db.users.findOrCreate({
-                        _id: msg.author.id
-                    })
+
+                    const userDocument = await msg.author.populateDocument()
                     userDocument.last_active = Date.now()
-                    let cmd = this.bot.commands.check(msg.content, serverDocument)
-                    if (cmd) {
-                        let command = this.bot.commands.all.get(cmd.command) || this.bot.commands.all.get(this.bot.commands.aliases.get(cmd.command))
-                        if (command) {
-                            if (serverDocument.config.commands.delete_messages && msg.guild.me.hasPermission("MANAGE_MESSAGES")) {
-                                try {
-                                    const m = await msg.delete();
-                                    this.bot.log.verbose(`Deleted command message by ${msg.author.tag}`, {
-                                        msg_id: m.id,
-                                        svr_id: m.guild.id
+
+                    if (memberDocument.afk_message) {
+                        memberDocument.afk_message = null;
+                        await msg.channel.send({
+                            embed: {
+                                color: Constants.Colors.INFO,
+                                description: `👋 Welcome back! I've removed your AFK message.`
+                            }
+                        })
+                    }
+
+                    msg.mentions.members.forEach(async member => {
+                        let mDocument = member.memberDocument;
+                        if (mDocument.afk_message) {
+                            await msg.channel.send({
+                                embed: {
+                                    color: Constants.INFO,
+                                    description: `⌨️ **${member.user.username}** is currently AFK:\n\`\`\`${mDocument.afk_message}\`\`\``
+                                }
+                            })
+                        }
+                    })
+
+                    if (channelDocument.bot_enabled) {
+                        if (!memberDocument.blocked) {
+                            if (msg.mentions.members.has(this.client.user.id)) {
+                                let prefix = this.client.commands.getPrefix(serverDocument)
+                                await msg.channel.send({
+                                    embed: {
+                                        color: this.client.getEmbedColor(msg.guild),
+                                        description: `My command prefix is \`${prefix}\``,
+                                        footer: {
+                                            text: `Respond with ${prefix}help for more information!`
+                                        }
+                                    }
+                                })
+                                return;
+                            }
+                            const cmd = this.client.commands.check(msg.content, serverDocument)
+                            if (cmd) {
+                                let command = this.client.commands.getPublic(cmd.command) || this.client.commands.getShared(cmd.command)
+                                if (command) {
+                                    if (serverDocument.config.commands.delete_messages && msg.guild.me.hasPermission("MANAGE_MESSAGES")) {
+                                        try {
+                                            const m = await msg.delete();
+                                            this.client.log.verbose(`Deleted command message by ${msg.author.tag}`, {
+                                                msg_id: m.id,
+                                                ch_hd: msg.channel.id,
+                                                svr_id: m.guild.id
+                                            })
+                                        } catch (err) {
+                                            this.client.log.warn(`Failed to delete command message by ${msg.author.tag}`, {
+                                                msg_id: m.id,
+                                                ch_id: msg.channel.id,
+                                                svr_id: msg.guild.id
+                                            })
+                                        }
+                                    }
+                                    this.client.log.info(`Treating '${msg.content}' as public command '${command.data.title}'`, {
+                                        svr_id: msg.guild.id,
+                                        usr_id: msg.author.id
                                     })
-                                } catch (_) {
-                                    //Eh
+                                    if (await command.checkPermissions(msg)) {
+                                        await command.run(msg, Constants, {
+                                            serverDocument,
+                                            userDocument,
+                                            memberDocument,
+                                            channelDocument
+                                        }, cmd.suffix).catch(err => {
+                                            this.client.log.error(`Failed to execute command '${command.data.title}'`, {
+                                                svr_id: msg.guild.id,
+                                                usr_id: msg.author.id,
+                                                msg_id: msg.id
+                                            }, err)
+                                            msg.channel.send({
+                                                embed: {
+                                                    color: Constants.Colors.RED,
+                                                    title: `❌ Error:`,
+                                                    description: `Something went wrong!`,
+                                                    footer: {
+                                                        text: `The debug information has been sent to the maintainers.`
+                                                    }
+                                                }
+                                            })
+                                        })
+                                    }
                                 }
                             }
-                            this.bot.log.info(`Treating '${msg.content}' as command '${command.info.title}'`, {
+                        } else {
+                            this.client.log.verbose(`Ignoring command handler for server-blocked user.`, {
+                                msg_id: msg.id,
+                                usr_id: msg.author.id,
                                 svr_id: msg.guild.id,
-                                usr_id: msg.author.id
+                                ch_id: msg.channel.id
                             })
-                            if (await command.checkPermissions(msg)) {
-                                await command.run(db, msg, serverDocument, userDocument, memberDocument, cmd.suffix).catch(err => {
-                                    this.bot.log.error(`Failed to execute command '${command.info.title}'`, {
-                                        svr_id: msg.guild.id,
-                                        usr_id: msg.author.id,
-                                        msg_id: msg.id
-                                    }, err)
-                                    msg.channel.send({
-                                        embed: {
-                                            color: this.bot.configJS.color_codes.RED,
-                                            title: `❌ Error:`,
-                                            description: `Something went wrong!`,
-                                            footer: {
-                                                text: `The debug information has been sent to the maintainers.`
-                                            }
-                                        }
-                                    })
-                                })
-                            }
                         }
+                    } else {
+                        this.client.log.verbose(`Ignoring command handler in disabled channel.`, {
+                            msg_id: msg.id,
+                            usr_id: msg.author.id,
+                            svr_id: msg.guild.id,
+                            ch_id: msg.channel.id
+                        })
                     }
-                    await userDocument.save()
-                    this.bot.log.silly(`Successfully saved user document for ${msg.author.tag}`, {
-                        svr_id: msg.guild.id,
-                        usr_id: msg.author.id
-                    })
                     await serverDocument.save()
-                    this.bot.log.silly(`Successfully saved server document for ${msg.guild.name}`, {
-                        svr_id: msg.guild.id
-                    })
+                    await userDocument.save()
                 } else {
-                    this.bot.log.error(`Could not find server document for ${msg.guild.name}!`, {
+                    this.client.log.error(`Could not find server document for ${msg.guild.name}!`, {
                         svr_id: msg.guild.id,
                         serverDocument: serverDocument
                     })
@@ -163,7 +242,7 @@ module.exports = class MessageCreate extends Event {
             }
         }
         timer.stop()
-        this.bot.log.verbose(`Successfully finished handling Discord message. Took ${Math.round(timer.duration / 2)}ms.`, {
+        this.client.log.verbose(`Successfully finished handling Discord message. Took ${Math.round(timer.duration / 2)}ms.`, {
             svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
             ch_id: msg.channel.id,
             usr_id: msg.author.id

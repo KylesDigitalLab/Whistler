@@ -3,14 +3,14 @@ const { renderFile } = require("ejs")
 const { join } = require("path")
 
 module.exports = class WebSocket {
-    constructor(bot) {
-        Object.defineProperty(this, `bot`, {
-            value: bot,
+    constructor(client) {
+        Object.defineProperty(this, `client`, {
+            value: client,
             enumerable: false
         });
         this.app = express();
         this.app.use((req, res, next) => {
-            this.bot.log.debug(`Received ${req.method} request at ${req.originalUrl} from ${req.ip}`, {
+            this.client.log.debug(`Received ${req.method} request at ${req.originalUrl} from ${req.ip}`, {
                 params: req.params,
                 query: req.query,
                 body: req.body
@@ -23,9 +23,9 @@ module.exports = class WebSocket {
         this.app.use(`/public`, express.static(`${__dirname}/public`))
         this.app.get(`/`, (req, res) => {
             res.status(200).render("pages/landing.ejs", {
-                bot: this.bot
+                botClient: this.client
             })
         })
-        this.server = this.app.listen(8080, () => this.bot.log.info(`Websocket listening on port ${this.server.address().port}`))
+        this.server = this.app.listen(8080, () => this.client.log.info(`Websocket listening on port ${this.server.address().port}`))
     }
 }

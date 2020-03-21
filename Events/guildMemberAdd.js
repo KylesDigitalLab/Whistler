@@ -1,49 +1,50 @@
 const { Event } = require("../Structures")
 const moment = require("moment")
+const { Constants } = require("../Internals")
 
 module.exports = class guildMemberAdd extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `guildMemberAdd`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    handle = async (db, member) => {
+    async handle(member) {
         const [svr, usr] = [member.guild, member.user];
-        this.bot.log.debug(`User ${usr.tag} joined server ${svr.name}`, {
+        this.client.log.debug(`User ${usr.tag} joined server ${svr.name}`, {
             svr_id: svr.id,
-            usr_id: usr.id
+            usr_id: member.id
         })
-        await svr.populateDocument()
-        const serverDocument = svr.serverDocument;
+        const serverDocument = await svr.populateDocument()
         if (serverDocument) {
             serverDocument.members.push({
-                _id: usr.id
+                _id: member.id
             })
+            const memberDocument = serverDocument.members.id(member.id)
             if (serverDocument.config.log.enabled) {
-                const ch = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
+                const ch = await this.client.channels.fetch(serverDocument.config.log.channel_id)
                 await ch.send({
                     embed: {
                         thumbnail: {
                             url: usr.avatarURL()
                         },
-                        color: this.bot.getEmbedColor(svr, this.bot.configJS.color_codes.YELLOW),
+                        color: this.client.getEmbedColor(svr, Constants.Colors.YELLOW),
                         title: `👤 Member Joined`,
                         description: `**${usr.tag}** has joined the server.`,
                         footer: {
-                            text: `User ID: ${usr.id} | ${moment(member.joinedTimestamp).format(serverDocument.config.date_format)}`
+                            text: `User ID: ${member.id} | ${moment(member.joinedTimestamp).format(serverDocument.config.date_format)}`
                         }
                     }
                 })
             }
             await serverDocument.save();
-            this.bot.log.silly(`Successfully saved server document for '${svr.name}'`, {
+            this.client.log.silly(`Successfully saved server document for ${svr.name}`, {
                 svr_id: svr.id,
-                usr_id: usr.id
+                usr_id: member.id
             })
         } else {
-            this.bot.log.error(`Could not find server document for ${svr.name}`, {
-                svr_id: svr.name,
+            this.client.log.error(`Could not find server document for ${svr.name}`, {
+                svr_id: svr.id,
                 serverDocument: serverDocument
             })
         }

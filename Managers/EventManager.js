@@ -1,10 +1,11 @@
-const Manager  = require("../Structures/Manager")
+const Manager   = require("../Structures/Manager")
 const { Collection } = require("discord.js");
 const { readdir } = require("fs").promises
+const clearModuleCache = require("./clearModuleCache")
 
 module.exports = class EventManager extends Manager {
-    constructor(bot) {
-        super(bot)
+    constructor(client) {
+        super(client)
         /**
          * @type {Discord.Collection}
          */
@@ -14,24 +15,35 @@ module.exports = class EventManager extends Manager {
          */
         this.process = new Collection();
     }
-    loadAll = async() => {
+    async loadAll(setHandlers) {
         const events = await readdir(`./Events`)
         events.forEach(evtFile => {
             try {
-                const path = `../Events/${evtFile}`
-                this.bot.log.silly(`Loading event: ${path}`)
-                this.bot.clearCache(path)
-                const evt = new (require(path))(this.bot)
-                if(evt.info.type == "Discord") {
-                    this.discord.set(evt.info.title, evt)
-                } else if (evt.info.type == "Process") {
-                    this.process.set(evt.info.title, evt)
+                clearModuleCache(`../Events/${evtFile}`)
+                const evt = new (require(`../Events/${evtFile}`))(this.client)
+                if(evt.data.type == "discord") {
+                    this.discord.set(evt.data.title, evt)
+                    if(setHandlers) {
+                        this.client.on(evt.data.title, (...args) => {
+                            evt.handle(...args).catch(err => {
+                                this.client.log.error(`Failed to handle Discord event '${evt.data.title}'`, err)
+                            })
+                        })
+                    }
+                } else if (evt.data.type == "process") {
+                    this.process.set(evt.data.title, evt)
+                    if(setHandlers) {
+                        process.on(evt.data.title, (...args) => {
+                            evt.handle(...args)
+                        })
+                    }
+                } else {
+                    this.client.log.warn(`Event '${evt.data.title}' could not be loaded due to an invalid event type, received ${evt.data.type}`)
                 }
             } catch (err) {
-                this.bot.log.error(`Failed to load event '${evtFile}'!`, err)
-            } finally {
-                this.bot.log.debug(`Successfully loaded event ${evtFile.split(".")[0]}`)
+                this.client.log.error(`Failed to load event '${evtFile}'!`, err)
             }
         })
+        return this;
     }
 }

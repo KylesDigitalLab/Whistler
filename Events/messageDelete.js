@@ -1,32 +1,32 @@
 const { Event } = require("../Structures")
 const moment = require("moment")
+const { Constants } = require("../Internals")
 
 module.exports = class messageDelete extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `messageDelete`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    handle = async (db, msg) => {
+    async handle(msg) {
         const [svr, usr, ch] = [msg.guild, msg.author, msg.channel]
-        this.bot.log.silly(`Message by ${usr.tag} deleted in channel #${ch.name} in ${svr.name}`, {
+        this.client.log.silly(`Message by ${usr.tag} deleted in channel #${ch.name} in ${svr.name}`, {
             svr_id: svr.id,
             usr_id: usr.id,
             msg_id: msg.id,
             msg_content: msg.content
         })
-        await svr.populateDocument()
-        const serverDocument = svr.serverDocument;
+        const serverDocument = await svr.populateDocument()
         if (serverDocument) {
             if (serverDocument.config.log.enabled) {
-                const channel = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
+                const channel = await this.client.channels.fetch(serverDocument.config.log.channel_id)
                 await channel.send({
                     embed: {
                         thumbnail: {
                             url: usr.avatarURL()
                         },
-                        color: this.bot.configJS.color_codes.YELLOW,
+                        color: Constants.Colors.WARNING,
                         title: `⚠️ Message Deleted:`,
                         description: `**${usr.tag}**'s message has been deleted:`,
                         fields: [
@@ -53,7 +53,7 @@ module.exports = class messageDelete extends Event {
                 })
             }
         } else {
-            this.bot.log.error(`Could not find server document for ${svr.name}`, {
+            this.client.log.error(`Could not find server document for ${svr.name}`, {
                 svr_id: svr.name,
                 serverDocument: serverDocument
             })

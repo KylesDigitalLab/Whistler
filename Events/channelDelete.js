@@ -1,25 +1,25 @@
 const { Event } = require("../Structures")
 const moment = require("moment")
+const { Constants } = require("../Internals")
 
 module.exports = class channelDelete extends Event {
-    constructor(bot) {
-        super(bot, {
+    constructor(client) {
+        super(client, {
             title: `channelDelete`,
-            type: `Discord`
+            type: `discord`
         })
     }
-    handle = async (db, ch) => {
+    async handle(ch) {
         if (ch.guild) {
             const [svr] = [ch.guild];
-            this.bot.log.debug(`${ch.type} channel '${ch.name}' deleted in ${svr.name}`, {
+            this.client.log.debug(`${ch.type} channel '${ch.name}' deleted in ${svr.name}`, {
                 svr_id: svr.id,
                 ch_id: ch.id
             })
-            await svr.populateDocument()
-            const serverDocument = svr.serverDocument;
+            const serverDocument = await svr.populateDocument()
             if (serverDocument) {
                 if (serverDocument.config.log.enabled) {
-                    const channel = await this.bot.channels.fetch(serverDocument.config.log.channel_id)
+                    const channel = await this.client.channels.fetch(serverDocument.config.log.channel_id)
                     const embedFields = [];
                     if (channel.name) {
                         embedFields.push({
@@ -30,7 +30,7 @@ module.exports = class channelDelete extends Event {
                     }
                     await channel.send({
                         embed: {
-                            color: this.bot.configJS.color_codes.YELLOW,
+                            color: Constants.Colors.WARNING,
                             title: `⚠️ Channel Deleted`,
                             description: `A ${ch.type} channel was deleted.`,
                             fields: embedFields,
@@ -41,7 +41,7 @@ module.exports = class channelDelete extends Event {
                     })
                 }
             } else {
-                this.bot.log.error(`Could not find server document for ${svr.name}`, {
+                this.client.log.error(`Could not find server document for ${svr.name}`, {
                     svr_id: svr.name,
                     serverDocument: serverDocument
                 })

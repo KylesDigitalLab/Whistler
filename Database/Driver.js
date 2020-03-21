@@ -1,7 +1,6 @@
 const { connect, model, models, connection} = require("mongoose")
 
-const { serverSchema } = require("./Schemas")
-const { userSchema } = require("./Schemas")
+const { serverSchema, userSchema } = require("./Schemas")
 
 module.exports = class MongoDriver {
     constructor(bot) {

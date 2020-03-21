@@ -1,56 +1,56 @@
 <!DOCTYPE html>
 <html>
-
+''
 <head>
-    <%- include('../partials/head') %>
+  <%- include ('../partials/head') %>
 </head>
 
 <body>
-    <section class="hero is-link">
-        <div class="hero-body">
-            <div class="container">
-                <h1 class="title has-text-centered"><%=bot.user.username%></h1>
-                <p class="subtitle has-text-centered"><%=bot.user.username%> is a multi-purpose bot designed to enhance
-                    your Discord experience. It features moderation tools to help you run your server, and utilities to
-                    get detailed information, such as server or user information, or even search Google or get the
-                    weather.
-                    <br><br> As it is a work in progress, not all features may work as intended. Please report any bugs!
-                </p>
-                <div class="has-text-centered">
-                    <a href="/login"><button class="button is-success is-medium">Login</button></a>
-                </div>
-            </div>
+  <section class="hero is-link">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class="title has-text-centered"><%=botClient.user.username%></h1>
+        <p class="subtitle has-text-centered"><%=botClient.user.username%> is a multi-purpose bot designed to enhance
+          your Discord experience. It features moderation tools to help you run your server, and utilities to
+          get detailed information, such as server or user information, or even search Google or get the
+          weather.
+          <br><br> As it is a work in progress, not all features may work as intended. Please report any bugs!
+        </p>
+        <div class="has-text-centered">
+          <a href="/login"><button class="button is-success is-medium">Login</button></a>
         </div>
-    </section>
-    <section class="hero is-info">
-        <div class="hero-body">
-            <div class="container">
-                <nav class="level">
-                    <div class="level-item has-text-centered">
-                      <div>
-                        <p class="heading">Servers</p>
-                        <p class="title"><%=bot.guilds.cache.size%></p>
-                      </div>
-                    </div>
-                    <div class="level-item has-text-centered">
-                      <div>
-                        <p class="heading">Users</p>
-                        <p class="title"><%=bot.users.cache.size%></p>
-                      </div>
-                    </div>
-                    <div class="level-item has-text-centered">
-                      <div>
-                        <p class="heading">Commands</p>
-                        <p class="title"><%=bot.commands.size%></p>
-                      </div>
-                    </div>
-                  </nav>
+      </div>
+    </div>
+  </section>
+  <section class="hero is-info">
+    <div class="hero-body">
+      <div class="container">
+        <nav class="level">
+          <div class="level-item has-text-centered">
+            <div>
+              <p class="heading">Servers</p>
+              <p class="title"><%=botClient.guilds.cache.size%></p>
             </div>
-        </div>
-    </section>
-    <footer class="footer">
-        <%- include('../partials/footer') %>
-    </footer>
+          </div>
+          <div class="level-item has-text-centered">
+            <div>
+              <p class="heading">Users</p>
+              <p class="title"><%=botClient.users.cache.size%></p>
+            </div>
+          </div>
+          <div class="level-item has-text-centered">
+            <div>
+              <p class="heading">Commands</p>
+              <p class="title"><%=botClient.commands.public.all.size%></p>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </section>
+  <footer class="footer">
+    <%- include (`../partials/footer`) %>
+  </footer>
 </body>
 
 </html>
