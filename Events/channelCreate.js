@@ -18,11 +18,25 @@ module.exports = class channelCreate extends Event {
             })
             const serverDocument = await svr.populateDocument()
             if (serverDocument) {
-                serverDocument.channels.push({
-                    _id: ch.id
-                })
+                switch (ch.type) {
+                    case "text":
+                        serverDocument.channels.text.push({
+                            _id: ch.id
+                        })
+                        break;
+                    case "voice":
+                        serverDocument.channels.voice.push({
+                            _id: ch.id
+                        })
+                        break;
+                    case "category":
+                        serverDocument.channels.category.push({
+                            _id: ch.id
+                        })
+                        break;
+                }
                 if (serverDocument.config.log.enabled) {
-                    const channel = await this.client.channels.fetch(serverDocument.config.log.channel_id)
+                    const channel = svr.channels.cache.get(serverDocument.config.log.channel_id)
                     const embedFields = [];
                     if (channel.name) {
                         embedFields.push({
@@ -38,7 +52,7 @@ module.exports = class channelCreate extends Event {
                             description: `A new ${ch.type} channel was created.`,
                             fields: embedFields,
                             footer: {
-                                text: `Channel ID: ${ch.id} | ${moment(ch.createdTimestamp).format(serverDocument.config.date_format)}`
+                                text: `Channel ID: ${ch.id} | ${svr.formatDate(ch.createdAt)}`
                             }
                         }
                     })

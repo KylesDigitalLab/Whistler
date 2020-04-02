@@ -1,4 +1,3 @@
-const setupNewServer = require("./../Modules/setupNewServer.js")
 const { Event } = require("../Structures")
 const {models: db} = require("mongoose")
 
@@ -15,7 +14,7 @@ module.exports = class guildDelete extends Event {
             usr_id: svr.ownerID
         })
         try {
-            await db.servers.remove({
+            await db.servers.deleteOne({
                 svr_id: svr.id
             })
             this.client.log.silly(`Removed server document for ${svr.name}`, {

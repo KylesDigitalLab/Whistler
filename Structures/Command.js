@@ -16,26 +16,26 @@ module.exports = class Command {
     async checkPermissions(msg) {
         if(msg.guild) {
             if (this.data.permissions) {
-                if (!msg.member.hasPermission(this.data.permissions)) {
+                if (!msg.member.hasPermission(this.data.permissions.user)) {
                     await msg.channel.send({
                         embed: {
                             color: Constants.Colors.MISSING_PERMS,
                             title: `❌ Missing Permissions:`,
-                            description: `Sorry, you don't have permission to run this command.`,
+                            description: Constants.TEXT.MISSING_PERMS,
                         }
                     })
                     return false;
                 }
-                if (!msg.guild.me.hasPermission(this.data.permissions)) {
+                if (!msg.guild.me.hasPermission(this.data.permissions.bot)) {
                     await msg.channel.send({
                         embed: {
                             color: Constants.Colors.MISSING_PERMS,
                             title: `❌ Missing Permissions:`,
-                            description: `I don't have the required permissions to run this command!.`,
+                            description: `I don't have the required permissions to run this command!`,
                             fields: [
                                 {
                                     name: `Required Permissions:`,
-                                    value: `\`${this.data.permissions.join(`, `)}\``
+                                    value: `\`${this.data.permissions.bot.join(`, `)}\``
                                 }
                             ],
                             footer: {
@@ -51,8 +51,8 @@ module.exports = class Command {
             await msg.channel.send({
                 embed: {
                     color: Constants.Colors.MISSING_PERMS,
-                    title: `❌ Missing Permissions`,
-                    description: `This command is restricted to **bot maintainers only**.`
+                    title: `❌ Missing Permissions:`,
+                    description: Constants.TEXT.MISSING_PERMS,
                 }
             })
             return false;

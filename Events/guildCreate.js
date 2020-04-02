@@ -1,4 +1,4 @@
-const setupNewServer = require("./../Modules/setupNewServer.js")
+const { NewServer } = require("./../Modules")
 const { Event } = require("../Structures")
 
 module.exports = class guildCreate extends Event {
@@ -14,7 +14,7 @@ module.exports = class guildCreate extends Event {
             usr_id: svr.ownerID
         })
         try {
-            const serverDocument = await setupNewServer(this.client, svr, new this.client.db.servers({
+            const serverDocument = await NewServer(this.client, svr, new this.client.db.servers({
                 _id: svr.id
             }))
             await this.client.db.servers.create(serverDocument)
@@ -23,13 +23,12 @@ module.exports = class guildCreate extends Event {
                 usr_id: svr.ownerID
             })
         } catch (err) {
-            this.client.log.info(`Failed to create server document for ${svr.name}`, {
+            this.client.log.error(`Failed to create server document for ${svr.name}`, {
                 svr_id: svr.id,
                 usr_id: svr.ownerID
             }, err)
         }
-        const DM = await svr.owner.createDM()
-        await DM.send({
+        await svr.owner.send({
             embed: {
                 title: `🎉 Thank You!`,
                 description: `I'm **${this.client.user.username}**, and I've just been added to **${svr.name}**, a server that you own!\nThanks for choosing me!`

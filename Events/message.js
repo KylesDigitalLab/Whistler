@@ -1,5 +1,6 @@
 const { Event } = require("../Structures")
 const moment = require("moment")
+const { DiscordAPIError } = require("discord.js")
 const { Stopwatch } = require("../Modules/Utils")
 const { Constants } = require("../Internals")
 
@@ -57,13 +58,13 @@ module.exports = class MessageCreate extends Event {
                     msg_content: msg.content
                 })
                 if (this.client.configJS.maintainer_config.forwardDMs && !this.client.config.maintainers.includes(msg.author.id)) {
-                    this.client.config.maintainers.forEach(async usrID => {
-                        let user = this.client.users.cache.get(usrID)
+                    for (const id of this.client.config.maintainers) {
+                        let user = this.client.users.cache.get(id)
                         if (!user) {
-                            user = await this.client.users.fetch(usrID)
+                            user = await this.client.users.fetch(id)
                         }
-                        const DM = await user.createDM()
-                        await DM.send({
+                        const ch = await user.createDM()
+                        await ch.send({
                             embed: {
                                 color: Constants.Colors.INFO,
                                 author: {
@@ -77,10 +78,11 @@ module.exports = class MessageCreate extends Event {
                                 }
                             }
                         })
-                    })
+                    }
                 }
                 const userDocument = await msg.author.populateDocument();
                 userDocument.last_active = Date.now()
+
                 const cmd = this.client.commands.check(msg.content)
                 if (cmd) {
                     const command = this.client.commands.getPrivate(cmd.command) || this.client.commands.getShared(cmd.command)
@@ -91,11 +93,20 @@ module.exports = class MessageCreate extends Event {
                         if (await command.checkPermissions(msg)) {
                             await command.run(msg, Constants, {
                                 userDocument
-                            }, cmd.suffix).catch(err => {
+                            }, cmd.suffix).catch(async err => {
                                 this.client.log.error(`Failed to run private command '${cmd.data.title}'`, {
                                     usr_id: msg.author.id
                                 }, err)
-                                msg.channel.send(`Something went wrong!`)
+                                await msg.channel.send({
+                                    embed: {
+                                        color: Constants.Colors.RED,
+                                        title: `❌ Error:`,
+                                        description: `Something went wrong!`,
+                                        footer: {
+                                            text: `The debug information has been sent to the maintainers.`
+                                        }
+                                    }
+                                })
                             })
                         }
                     }
@@ -109,19 +120,9 @@ module.exports = class MessageCreate extends Event {
                 })
                 const serverDocument = await msg.guild.populateDocument()
                 if (serverDocument) {
-                    let channelDocument = serverDocument.channels.id(msg.channel.id)
-                    if (!channelDocument) {
-                        this.client.log.debug(`Channel document not found, creating now`, {
-                            ch_id: msg.channel.id,
-                            svr_id: msg.guild.id
-                        })
-                        serverDocument.channels.push({
-                            _id: msg.channel.id
-                        })
-                        channelDocument = serverDocument.channels.id(msg.channel.id)
-                    }
+                    const channelDocument = msg.channel.document;
+                    const memberDocument = msg.member.document;
 
-                    const memberDocument = msg.member.memberDocument;
                     memberDocument.last_active = Date.now()
                     memberDocument.message_count++;
 
@@ -133,7 +134,7 @@ module.exports = class MessageCreate extends Event {
                         await msg.channel.send({
                             embed: {
                                 color: Constants.Colors.INFO,
-                                description: `👋 Welcome back! I've removed your AFK message.`
+                                description: `👋 Welcome back, ${msg.author.toString()}! I've removed your AFK message.`
                             }
                         })
                     }
@@ -144,7 +145,7 @@ module.exports = class MessageCreate extends Event {
                             await msg.channel.send({
                                 embed: {
                                     color: Constants.INFO,
-                                    description: `⌨️ **${member.user.username}** is currently AFK:\n\`\`\`${mDocument.afk_message}\`\`\``
+                                    description: `⌨️ **${member.user.username}** is currently AFK:\`\`\`${mDocument.afk_message}\`\`\``
                                 }
                             })
                         }
@@ -170,20 +171,7 @@ module.exports = class MessageCreate extends Event {
                                 let command = this.client.commands.getPublic(cmd.command) || this.client.commands.getShared(cmd.command)
                                 if (command) {
                                     if (serverDocument.config.commands.delete_messages && msg.guild.me.hasPermission("MANAGE_MESSAGES")) {
-                                        try {
-                                            const m = await msg.delete();
-                                            this.client.log.verbose(`Deleted command message by ${msg.author.tag}`, {
-                                                msg_id: m.id,
-                                                ch_hd: msg.channel.id,
-                                                svr_id: m.guild.id
-                                            })
-                                        } catch (err) {
-                                            this.client.log.warn(`Failed to delete command message by ${msg.author.tag}`, {
-                                                msg_id: m.id,
-                                                ch_id: msg.channel.id,
-                                                svr_id: msg.guild.id
-                                            })
-                                        }
+                                        const m = await msg.delete().catch(() => null)
                                     }
                                     this.client.log.info(`Treating '${msg.content}' as public command '${command.data.title}'`, {
                                         svr_id: msg.guild.id,
@@ -196,21 +184,54 @@ module.exports = class MessageCreate extends Event {
                                             memberDocument,
                                             channelDocument
                                         }, cmd.suffix).catch(err => {
-                                            this.client.log.error(`Failed to execute command '${command.data.title}'`, {
-                                                svr_id: msg.guild.id,
-                                                usr_id: msg.author.id,
-                                                msg_id: msg.id
-                                            }, err)
-                                            msg.channel.send({
-                                                embed: {
-                                                    color: Constants.Colors.RED,
-                                                    title: `❌ Error:`,
-                                                    description: `Something went wrong!`,
-                                                    footer: {
-                                                        text: `The debug information has been sent to the maintainers.`
+                                            //Show debug information for maintainers 
+                                            if (this.client.config.maintainers.includes(msg.author.id)) {
+                                                this.client.log.warn(`Failed to execute command '${command.data.title}'`, {
+                                                    svr_id: msg.guild.id,
+                                                    usr_id: msg.author.id,
+                                                    msg_id: msg.id
+                                                }, err)
+                                                msg.channel.send({
+                                                    embed: {
+                                                        color: Constants.Colors.ERROR,
+                                                        title: `❌ Command Error:`,
+                                                        description: `\`\`\`js\n${err.stack}\`\`\``
                                                     }
+                                                })
+                                            } else {
+                                                if (err instanceof DiscordAPIError) {
+                                                    //Handle Discord API errors (e.g missing permissions or can't send embed)
+                                                    this.client.log.warn(`Failed to execute command '${command.data.title}' due to Discord API Error`, {
+                                                        svr_id: msg.guild.id,
+                                                        usr_id: msg.author.id,
+                                                        msg_id: msg.id
+                                                    }, err)
+                                                    msg.channel.send({
+                                                        embed: {
+                                                            color: Constants.Colors.YELLOW,
+                                                            title: `⚠️ Warning:`,
+                                                            description: `An unexpected Discord error occurred.`
+                                                        }
+                                                    })
+                                                } else {
+                                                    //Handle more serious errors
+                                                    this.client.log.error(`Failed to execute command '${command.data.title}'`, {
+                                                        svr_id: msg.guild.id,
+                                                        usr_id: msg.author.id,
+                                                        msg_id: msg.id
+                                                    }, err)
+                                                    msg.channel.send({
+                                                        embed: {
+                                                            color: Constants.Colors.RED,
+                                                            title: `❌ Error:`,
+                                                            description: `Something went wrong!`,
+                                                            footer: {
+                                                                text: `The debug information has been sent to the maintainers.`
+                                                            }
+                                                        }
+                                                    })
                                                 }
-                                            })
+                                            }
                                         })
                                     }
                                 }
@@ -234,7 +255,7 @@ module.exports = class MessageCreate extends Event {
                     await serverDocument.save()
                     await userDocument.save()
                 } else {
-                    this.client.log.error(`Could not find server document for ${msg.guild.name}!`, {
+                    this.client.log.error(`Could not find server document for ${msg.guild.name}`, {
                         svr_id: msg.guild.id,
                         serverDocument: serverDocument
                     })

@@ -1,11 +1,13 @@
 const { ExtendedClient } = require("./Structures")
-const {config, configJS, auth} = require("./Config")
+const { config, configJS, auth } = require("./Config")
 const MongoDriver = require("./Database/Driver")
-const { StructureExtender, addToGlobal } = require("./Modules/Utils")
+const { addToGlobal, ObjectDefines } = require("./Modules/Utils")
 const { Constants } = require("./Internals")
 
+ObjectDefines()
+
 addToGlobal("formatNumber", num => {
-    switch(typeof num) {
+    switch (typeof num) {
         case 'number':
             return num.toLocaleString("en-US")
         case 'string':
@@ -14,11 +16,15 @@ addToGlobal("formatNumber", num => {
             return null;
     }
 })
-StructureExtender();
-const client = new ExtendedClient(config, configJS);
+const client = new ExtendedClient(config, configJS, {
+    client: {
+        disableMentions: `everyone`
+    }
+});
 const driver = new MongoDriver(client);
 
-driver.initialize(config.db_url).then(async db => {
+(async () => {
+    const db = await driver.initialize(config.db_url)
     client.log.info(`Successfully connected to MongoDB database at ${config.db_url}!`)
 
     try {
@@ -41,21 +47,8 @@ driver.initialize(config.db_url).then(async db => {
     } catch (err) {
         client.log.error(`Failed to login to Discord:`, err)
     }
-
-}).catch(err => {
-    client.log.error('Failed to connect to MongoDB database!', err)
+})().catch(err => {
+    process.exit()
 })
 
-Object.defineProperty(Boolean.prototype, `humanize`, {
-    value: () => {
-        if (this) {
-            return "enabled";
-        } else {
-            return "disabled";
-        }
-    }
-})
-
-String.prototype.capitalize = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1)
-}
+module.exports = client;

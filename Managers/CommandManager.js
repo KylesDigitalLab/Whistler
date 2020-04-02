@@ -24,8 +24,7 @@ module.exports = class CommandManager extends Manager {
         
     }
     async loadAllPublic() {
-        const commands = await readdir(`./Commands/Public`)
-        commands.forEach(cmdFile => {
+        for(const cmdFile of await readdir(`./Commands/Public`)) {
             try {
                 let path = `../Commands/Public/${cmdFile}`
                 clearModuleCache(path)
@@ -35,12 +34,11 @@ module.exports = class CommandManager extends Manager {
             } catch (err) {
                 this.client.log.error(`Failed to load public command ${cmdFile}`, err)
             }
-        })
+        }
         return this;
     }
     async loadAllPrivate() {
-        const commands = await readdir(`./Commands/Private`)
-        commands.forEach(cmdFile => {
+        for(const cmdFile of await readdir(`./Commands/Private`)) {
             try {
                 let path = `../Commands/Private/${cmdFile}`
                 clearModuleCache(path)
@@ -50,12 +48,11 @@ module.exports = class CommandManager extends Manager {
             } catch (err) {
                 this.client.log.error(`Failed to load private command ${cmdFile}`, err)
             }
-        })
+        }
         return this;
     }
     async loadAllShared() {
-        const commands = await readdir(`./Commands/Shared`)
-        commands.forEach(cmdFile => {
+        for(const cmdFile of await readdir(`./Commands/Shared`)) {
             try {
                 let path = `../Commands/Shared/${cmdFile}`
                 clearModuleCache(path)
@@ -65,7 +62,7 @@ module.exports = class CommandManager extends Manager {
             } catch (err) {
                 this.client.log.error(`Failed to load shared command ${cmdFile}`, err)
             }
-        })
+        }
         return this;
     }
     async loadAll() {
@@ -84,7 +81,7 @@ module.exports = class CommandManager extends Manager {
         return this.shared.all.get(str) || this.shared.all.get(this.shared.aliases.get(str))
     }
     getPrefix(serverDocument) {
-        return `${serverDocument ? serverDocument.config.prefix : this.client.config.default_prefix}`
+        return serverDocument ? serverDocument.config.prefix : this.client.config.default_prefix
     }
     check(msg, serverDocument) {
         let str, prefix;

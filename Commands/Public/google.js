@@ -16,6 +16,13 @@ module.exports = class GoogleCommand extends Command {
         Colors 
     }, {}, suffix) {
         if (suffix) {
+            const m = await msg.channel.send({
+                embed: {
+                    color: Colors.YELLOW,
+                    title: `Please wait...`,
+                    description: `We are searching Google...`
+                }
+            })
             const items = await google({
                 query: suffix,
                 disableConsole: true
@@ -32,18 +39,17 @@ module.exports = class GoogleCommand extends Command {
                     }
                 })
             })
-            if (items.length > 0) {
-                let titles = [];
-                let descriptions = []
-                let urls = [];
-                items.forEach(i => {
+            if (items.length) {
+                let [titles, descriptions, urls] = [[], [], []];
+                for(const i of items) {
                     titles.push(i.title)
                     descriptions.push(i.snippet)
                     urls.push(i.link)
-                })
+                }
+                await m.delete().catch(() => null)
                 await new PaginatedEmbed(this.client, msg, {
                     color: this.client.getEmbedColor(msg.guild),
-                    footer: `Results provided by google-it | Result {currentPage} out of {totalPages}`
+                    footer: `Result {currentPage} out of {totalPages} | Results provided by google-it`
                 }, {
                     titles,
                     descriptions,

@@ -1,4 +1,4 @@
-const setupNewServer = require("./../Modules/setupNewServer")
+const { NewServer } = require("../Modules")
 const WebSocket = require("../Web/WebSocket")
 const { Event } = require("../Structures")
 
@@ -25,7 +25,7 @@ module.exports = class Ready extends Event {
                         svr_id: svr.id
                     })
                     try {
-                        const serverDocument = await setupNewServer(this.client, svr, new this.client.db.servers({
+                        const serverDocument = await NewServer(this.client, svr, new this.client.db.servers({
                             _id: svr.id
                         }))
                         await this.client.db.servers.create(serverDocument)
@@ -45,7 +45,6 @@ module.exports = class Ready extends Event {
             }
         })
         await this.client.user.setPresence(this.client.configJS.getPresence(this.client))
-        this.client.log.verbose(`Successfully set presence`)
 
         const web = new WebSocket(this.client);
     }

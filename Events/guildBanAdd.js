@@ -17,17 +17,17 @@ module.exports = class guildBanAdd extends Event {
         const serverDocument = await svr.populateDocument()
         if (serverDocument) {
             if (serverDocument.config.log.enabled) {
-                const ch = await this.client.channels.fetch(serverDocument.config.log.channel_id)
+                const ch = await svr.channels.cache.get(serverDocument.config.log.channel_id)
                 await ch.send({
                     embed: {
                         thumbnail: {
-                            url: usr.avatarURL()
+                            url: usr.avatarURL(Constants.ImageURLOptions)
                         },
                         color: this.client.getEmbedColor(svr, Constants.Colors.RED),
                         title: `🔨 Member Banned`,
                         description: `**${usr.tag}** has been banned from the server.`,
                         footer: {
-                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverDocument.config.date_format)}`
+                            text: `User ID: ${usr.id} | ${svr.formatDate()}`
                         }
                     }
                 })

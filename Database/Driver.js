@@ -19,7 +19,7 @@ module.exports = class MongoDriver {
         model("servers", serverSchema)
         model("users", userSchema)
 
-        connection.on("error", err => this.bot.log.error(`An error occurred with the MongoDB connection:\r\n`, err))
+        connection.on("error", err => this.bot.log.error(`An error occurred with the MongoDB connection`, err))
         //connection.once("open", resolve)
         return models;
     }

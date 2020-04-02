@@ -23,7 +23,7 @@ module.exports = class StatusCommand extends Command {
             member = msg.guild.findMember(suffix)
         }
         if (member) {
-            if (member.presence.activities.length > 0) {
+            if (member.presence.activities.length) {
                 member.presence.activities.forEach(async game => {
                     let embedFields = [
                         {
@@ -63,7 +63,7 @@ module.exports = class StatusCommand extends Command {
                     }
                     await msg.channel.send({
                         embed: {
-                            color: this.client.getEmbedColor(msg.guild),
+                            color: member.embedColor,
                             thumbnail: {
                                 url: `${game.assets ? game.assets.largeImageURL() : member.user.avatarURL()}`
                             },
@@ -75,7 +75,7 @@ module.exports = class StatusCommand extends Command {
             } else {
                 await msg.channel.send({
                     embed: {
-                        color: this.client.getEmbedColor(msg.guild),
+                        color: member.embedColor,
                         description: `**${member.user.username}** isn't playing anything.`
                     }
                 })

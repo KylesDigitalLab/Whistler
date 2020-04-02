@@ -16,8 +16,7 @@ module.exports = class EventManager extends Manager {
         this.process = new Collection();
     }
     async loadAll(setHandlers) {
-        const events = await readdir(`./Events`)
-        events.forEach(evtFile => {
+        for(const evtFile of await readdir(`./Events`)) {
             try {
                 clearModuleCache(`../Events/${evtFile}`)
                 const evt = new (require(`../Events/${evtFile}`))(this.client)
@@ -26,7 +25,7 @@ module.exports = class EventManager extends Manager {
                     if(setHandlers) {
                         this.client.on(evt.data.title, (...args) => {
                             evt.handle(...args).catch(err => {
-                                this.client.log.error(`Failed to handle Discord event '${evt.data.title}'`, err)
+                                this.client.log.error(`Failed to handle Discord event ${evt.data.title}`, err)
                             })
                         })
                     }
@@ -43,7 +42,7 @@ module.exports = class EventManager extends Manager {
             } catch (err) {
                 this.client.log.error(`Failed to load event '${evtFile}'!`, err)
             }
-        })
+        }
         return this;
     }
 }

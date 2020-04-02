@@ -7,7 +7,7 @@ module.exports = class TimeCommand extends Command {
     constructor(client) {
         super(client, {
             title: `time`,
-            aliases: ['tz', `timezone`],
+            aliases: [],
             description: "Gets the time for a location.",
             usage: `<location>`,
             category: `media`
@@ -47,21 +47,21 @@ module.exports = class TimeCommand extends Command {
         }
         if (address) {
             try {
-                const { data } = await get(`https://maps.googleapis.com/maps/api/geocode/json`, {
+                const response = await get(`https://maps.googleapis.com/maps/api/geocode/json`, {
                     params: {
                         address: address,
-                        key: auth.keys.googleMapsAPI
+                        key: auth.tokens.googleMapsAPI
                     },
                     headers: {
                         "Accept": "application/json"
                     }
                 })
-                if (data.status == "OK") {
-                    const reponse = await get(`https://maps.googleapis.com/maps/api/timezone/json`, {
+                if (response.data.status == "OK") {
+                    const tzResponse = await get(`https://maps.googleapis.com/maps/api/timezone/json`, {
                         params: {
-                            location: `${data.results[0].geometry.location.lat},${data.results[0].geometry.location.lng}`,
+                            location: `${response.data.results[0].geometry.location.lat},${response.data.results[0].geometry.location.lng}`,
                             timestamp: Math.floor(Date.now() / 1000),
-                            key: auth.keys.googleMapsAPI
+                            key: auth.tokens.googleMapsAPI
                         },
                         headers: {
                             "Accept": "application/json"
@@ -71,7 +71,7 @@ module.exports = class TimeCommand extends Command {
                         embed: {
                             color: this.client.getEmbedColor(msg.guild),
                             title: `🕐 Time:`,
-                            description: `Currently, it's **${moment(new Date(Date.now() + (parseInt(reponse.data.rawOffset) * 1000) + (parseInt(reponse.data.dstOffset) * 1000))).utc().format("h:mma")}** in **${data.results[0].address_components[0].long_name}**. The timezone is **${reponse.data.timeZoneName}**.`,
+                            description: `Currently, it's **${moment(new Date(Date.now() + (parseInt(tzResponse.data.rawOffset) * 1000) + (parseInt(tzResponse.data.dstOffset) * 1000))).utc().format("h:mma")}** in **${response.data.results[0].address_components[0].long_name}**. The timezone is **${tzResponse.data.timeZoneName}**.`,
                             footer: {
                                 text: `Information provided by Google Maps API.`
                             }

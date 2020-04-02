@@ -20,28 +20,39 @@ module.exports = class guildMemberAdd extends Event {
             serverDocument.members.push({
                 _id: member.id
             })
-            const memberDocument = serverDocument.members.id(member.id)
+            const memberDocument = member.document;
             if (serverDocument.config.log.enabled) {
-                const ch = await this.client.channels.fetch(serverDocument.config.log.channel_id)
+                const ch = svr.channels.cache.get(serverDocument.config.log.channel_id)
                 await ch.send({
                     embed: {
                         thumbnail: {
-                            url: usr.avatarURL()
+                            url: usr.avatarURL(Constants.ImageURLOptions)
                         },
                         color: this.client.getEmbedColor(svr, Constants.Colors.YELLOW),
                         title: `👤 Member Joined`,
                         description: `**${usr.tag}** has joined the server.`,
                         footer: {
-                            text: `User ID: ${member.id} | ${moment(member.joinedTimestamp).format(serverDocument.config.date_format)}`
+                            text: `User ID: ${member.id} | ${svr.formatDate(member.joinedAt)}`
                         }
                     }
                 })
             }
+            for (const roleDocument of serverDocument.roles.filter(r => r.auto_role)) {
+                const role = svr.roles.cache.get(roleDocument._id)
+                if (role) {
+                    if (svr.me.hasPermission("MANAGE_ROLES")) {
+                        await member.roles.add(role).catch(err => {
+                            this.client.log.warn(`Failed to give new member ${usr.tag} role '${role.name}'`, {
+                                svr_id: svr.id,
+                                usr_id: usr.id,
+                                role_id: roleDocument._id
+                            }, err)
+                        })
+                    }
+                }
+            }
+
             await serverDocument.save();
-            this.client.log.silly(`Successfully saved server document for ${svr.name}`, {
-                svr_id: svr.id,
-                usr_id: member.id
-            })
         } else {
             this.client.log.error(`Could not find server document for ${svr.name}`, {
                 svr_id: svr.id,

@@ -12,7 +12,9 @@ module.exports = class UserInfoCommand extends Command {
         })
     }
     async run(msg, { 
-        Colors 
+        Colors,
+        ImageURLOptions,
+        StatusText
     }, {
         serverDocument,
         memberDocument
@@ -23,32 +25,17 @@ module.exports = class UserInfoCommand extends Command {
         } else {
             member = msg.guild.findMember(suffix)
             if(member) {
-                memberDocument = member.memberDocument;
+                memberDocument = member.document;
             }
         }
         if (member) {
-            let statusText;
             let user = member.user;
-            switch (member.presence.status) {
-                case `dnd`:
-                    statusText = `🔴 Do Not Disturb`
-                    break;
-                case `online`:
-                    statusText = `🟢 Online`
-                    break;
-                case `idle`:
-                    statusText = `🟡 Idle`
-                    break;
-                case `offline`:
-                    statusText = `⚫ Offline`
-                    break;
-            }
-            msg.channel.send({
+            await msg.channel.send({
                 embed: {
-                    color: this.client.getEmbedColor(msg.guild),
+                    color: member.embedColor,
                     title: `👤 User Information:`,
                     thumbnail: {
-                        url: user.avatarURL()
+                        url: user.avatarURL(ImageURLOptions)
                     },
                     fields: [
                         {
@@ -68,7 +55,7 @@ module.exports = class UserInfoCommand extends Command {
                         },
                         {
                             name: `🚦 Status:`,
-                            value: `${statusText}`,
+                            value: StatusText[member.presence.status],
                             inline: true
                         },
                         {
@@ -83,17 +70,17 @@ module.exports = class UserInfoCommand extends Command {
                         },
                         {
                             name: `Last Active:`,
-                            value: `${moment(memberDocument.last_active).format(serverDocument.config.date_format)} (${moment(memberDocument.last_active).fromNow()})`,
+                            value: `${msg.guild.formatDate(memberDocument.last_active)} (${moment(memberDocument.last_active).fromNow()})`,
                             inline: true
                         },
                         {
                             name: `📆 Created:`,
-                            value: `${moment(user.createdAt).format(serverDocument.config.date_format)} (${moment(user.createdAt).fromNow()})`,
+                            value: `${msg.guild.formatDate(user.createdAt)} (${moment(user.createdAt).fromNow()})`,
                             inline: true
                         },
                         {
                             name: `🗓️ Joined:`,
-                            value: `${moment(member.joinedAt).format(serverDocument.config.date_format)} (${moment(member.joinedAt).fromNow()})`,
+                            value: `${msg.guild.formatDate(user.joinedAt)} (${moment(member.joinedAt).fromNow()})`,
                             inline: true
                         }
                     ], 

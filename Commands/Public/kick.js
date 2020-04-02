@@ -1,11 +1,15 @@
 const { Command } = require("../../Structures")
+const { ModLog } = require("../../Modules")
 
 module.exports = class KickCommand extends Command {
     constructor(client) {
         super(client, {
             title: `kick`,
             aliases: [],
-            permissions: ["KICK_MEMBERS"],
+            permissions: {
+                bot: ["KICK_MEMBERS"],
+                user: ["KICK_MEMBERS"]
+            },
             description: "Kicks a member from the server.",
             usage: `<member> | <reason>`,
             category: `moderation`
@@ -50,7 +54,18 @@ module.exports = class KickCommand extends Command {
                             svr_id: kickedMember.guild.id,
                             usr_id: kickedMember.user.id
                         })
-                        msg.channel.send({
+                        await ModLog.createEntry(this.client, msg.guild, {
+                            action: `Kick`,
+                            user: member.user,
+                            moderator: msg.author,
+                            reason: reason
+                        }).catch(err => {
+                            this.client.log.warn(`Failed to create modlog entry`, {
+                                svr_id: msg.guild.id,
+                                usr_id: msg.author.id
+                            }, err)
+                        })
+                        await msg.channel.send({
                             embed: {
                                 color: Colors.GREEN,
                                 title: `👟 Member Kicked`,
@@ -65,7 +80,7 @@ module.exports = class KickCommand extends Command {
                             svr_id: member.guild.id,
                             usr_id: member.user.id
                         }, err)
-                        msg.channel.send({
+                        await msg.channel.send({
                             embed: {
                                 color: Colors.ERROR,
                                 title: `❌ Error:`,
@@ -74,7 +89,7 @@ module.exports = class KickCommand extends Command {
                         })
                     }
                 } else {
-                    msg.channel.send({
+                    await msg.channel.send({
                         embed: {
                             color: Colors.ERROR,
                             title: `❌ Error:`,
@@ -86,7 +101,7 @@ module.exports = class KickCommand extends Command {
                     })
                 }
             } else {
-                msg.channel.send({
+                await msg.channel.send({
                     embed: {
                         color: Colors.SOFT_ERROR,
                         title: `⚠️ Warning:`,
@@ -95,7 +110,7 @@ module.exports = class KickCommand extends Command {
                 })
             }
         } else {
-            msg.channel.send({
+            await msg.channel.send({
                 embed: {
                     color: Colors.SOFT_ERROR,
                     title: `⚠️ Warning:`,

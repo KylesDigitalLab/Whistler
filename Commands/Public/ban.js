@@ -1,11 +1,16 @@
 const { Command } = require("../../Structures")
+const { ModLog } = require("../../Modules")
+const { GuildMember, User } = require("discord.js")
 
 module.exports = class BanCommand extends Command {
     constructor(client) {
         super(client, {
             title: `ban`,
             aliases: [],
-            permissions: ["BAN_MEMBERS"],
+            permissions: {
+                bot: ["BAN_MEMBERS"],
+                user: ["BAN_MEMBERS"]
+            },
             description: "Bans a member from the server.",
             category: `moderation`
         })
@@ -17,20 +22,31 @@ module.exports = class BanCommand extends Command {
     }, suffix) {
         let member, reason;
         if (suffix) {
+            let str = suffix.substring(0, suffix.indexOf("|")).trim();
             if (suffix.indexOf("|") > -1 && suffix.length > 3) {
-                member = msg.guild.findMember(suffix.substring(0, suffix.indexOf("|")).trim());
+                member = msg.guild.findMember(str);
                 reason = suffix.substring(suffix.indexOf("|") + 1).trim();
             } else {
                 member = msg.guild.findMember(suffix)
                 reason = `No reason was given.`
             }
+            if (!member) {
+                if (suffix.indexOf("|") > -1 && suffix.length > 3) {
+                    member = await this.client.users.fetch(str).catch(() => member = null)
+                    reason = suffix.substring(suffix.indexOf("|") + 1).trim();
+                } else {
+                    member = await this.client.users.fetch(suffix).catch(() => member = null)
+                    reason = `No reason was given.`
+                }
+            }
             if (member) {
-                if (member.bannable) {
+                let tag = `${!member instanceof GuildMember ? member.user.username : member.username}#${!member instanceof GuildMember ? member.user.discriminator : member.discriminator}`
+                if (!member.user || member.bannable) {
                     await msg.channel.send({
                         embed: {
                             color: Colors.WARNING,
                             title: `⚠️ Confirm Ban:`,
-                            description: `Are you **sure** you want to ban **${member.user.tag}**?`,
+                            description: `Are you **sure** you want to ${member instanceof GuildMember ? "" : "hackban"}ban **${member instanceof GuildMember ? member.user.tag : tag}**?`,
                             footer: {
                                 text: `Respond with a 'yes' or 'no'`
                             }
@@ -47,7 +63,7 @@ module.exports = class BanCommand extends Command {
                                     embed: {
                                         title: `🔨 Notification`,
                                         color: Colors.RED,
-                                        description: `Uh oh, it looks like you've been banned from **${member.guild.name}**.`,
+                                        description: `Uh oh, it looks like you've been banned from **${msg.guild.name}**.`,
                                         fields: [
                                             {
                                                 name: `Reason:`,
@@ -63,26 +79,37 @@ module.exports = class BanCommand extends Command {
                                     }
                                 }).catch(() => null)
                                 try {
-                                    const bannedMember = await member.ban({
+                                    const ban = await msg.guild.members.ban(member, {
                                         reason: `Member banned by ${msg.author.tag} | ${reason}`
                                     })
-                                    this.client.log.info(`Banned user ${bannedMember.user.tag} from server ${bannedMember.guild.name}`, {
-                                        svr_id: bannedMember.guild.id,
-                                        usr_id: bannedMember.user.id
+                                    this.client.log.info(`Banned user ${member instanceof GuildMember ? ban.user.tag : tag} from server ${msg.guild.name}`, {
+                                        svr_id: msg.guild.id,
+                                        usr_id: member instanceof GuildMember ? ban.user.id : ban.id || ban
                                     })
-                                    msg.channel.send({
+                                    await ModLog.createEntry(this.client, msg.guild, {
+                                        action: `Ban`,
+                                        user: member instanceof GuildMember ? member.user : member,
+                                        moderator: msg.author,
+                                        reason: reason
+                                    }).catch(err => {
+                                        this.client.log.warn(`Failed to create modlog entry`, {
+                                            svr_id: msg.guild.id,
+                                            usr_id: msg.author.id
+                                        }, err)
+                                    })
+                                    await msg.channel.send({
                                         embed: {
                                             color: Colors.GREEN,
                                             title: `🔨 Member Banned`,
-                                            description: `**${bannedMember.user.tag}** has been banned from **${bannedMember.guild.name}**.`
+                                            description: `**${member instanceof GuildMember ? ban.user.tag : tag}** has been banned from **${msg.guild.name}**.`
                                         }
                                     })
                                 } catch (err) {
-                                    this.client.log.error(`Failed to ban user ${member.user.tag} from server ${member.guild.name}`, {
-                                        svr_id: member.guild.id,
-                                        usr_id: member.user.id
+                                    this.client.log.error(`Failed to ban user ${member instanceof GuildMember ? member.user.tag : tag} from server ${msg.guild.name}`, {
+                                        svr_id: msg.guild.id,
+                                        usr_id: member instanceof GuildMember ? member.user.id : member.id,
                                     }, err)
-                                    msg.channel.send({
+                                    await msg.channel.send({
                                         embed: {
                                             color: Colors.ERROR,
                                             title: `❌ Error:`,
@@ -91,18 +118,18 @@ module.exports = class BanCommand extends Command {
                                     })
                                 }
                             } else {
-                                msg.channel.send({
+                                await msg.channel.send({
                                     embed: {
                                         color: Colors.YELLOW,
                                         title: `⚠️ Ban Cancelled:`,
-                                        description: `**${member.user.tag}** will **not** be banned.`
+                                        description: `**${member instanceof GuildMember ? member.user.tag : tag}** will **not** be banned.`
                                     }
                                 })
                             }
                         }
                     })
                 } else {
-                    msg.channel.send({
+                    await msg.channel.send({
                         embed: {
                             color: Colors.ERROR,
                             title: `❌ Error:`,
@@ -114,7 +141,7 @@ module.exports = class BanCommand extends Command {
                     })
                 }
             } else {
-                msg.channel.send({
+                await msg.channel.send({
                     embed: {
                         color: Colors.SOFT_ERROR,
                         title: `⚠️ Warning:`,
@@ -123,7 +150,7 @@ module.exports = class BanCommand extends Command {
                 })
             }
         } else {
-            msg.channel.send({
+            await msg.channel.send({
                 embed: {
                     color: Colors.SOFT_ERROR,
                     title: `⚠️ Warning:`,

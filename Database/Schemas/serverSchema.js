@@ -1,5 +1,4 @@
-const config = require('./../../config/config.json')
-const configJS = require('./../../config/config.js')
+const { config, configJS } = require('../../config')
 const { Schema } = require("mongoose")
 
 module.exports = new Schema({
@@ -24,13 +23,18 @@ module.exports = new Schema({
             type: String,
             default: configJS.date_format
         },
+        timezone: {
+            type: String,
+            default: configJS.server_defaults.timezone,
+        },
         commands: {
             delete_messages: {
                 type: Boolean,
                 default: false
             },
             disabled: {
-                type: Array
+                type: Array,
+                default: []
             }
         },
         moderation: {
@@ -41,7 +45,41 @@ module.exports = new Schema({
                 },
                 channel_id: {
                     type: String
-                }
+                },
+                current_case: {
+                    type: Number,
+                    default: 0
+                },
+                cases: [new Schema({
+                    _id: {
+                        type: Number,
+                        required: true
+                    },
+                    timestamp: {
+                        type: Date,
+                        default: Date.now
+                    },
+                    action: {
+                        type: String,
+                        enum: [`Strike`, `Unstrike`, `Kick`, `Ban`, `Mute`, `Unban`, `Unmute`],
+                        required: true
+                    },
+                    user_id: {
+                        type: String,
+                        required: true
+                    },
+                    moderator_id: {
+                        type: String,
+                        required: true
+                    },
+                    message_id: {
+                        type: String,
+                        required: true
+                    },
+                    reason: {
+                        type: String
+                    }
+                })]
             }
         },
         log: {
@@ -72,7 +110,7 @@ module.exports = new Schema({
             type: String
         },
         strikes: [new Schema({
-            _id: {
+            admin_id: {
                 type: String,
                 required: true
             },
@@ -91,17 +129,35 @@ module.exports = new Schema({
             type: String,
             required: true
         },
-    })],
-    channels: [new Schema({
-        _id: {
-            type: String,
-            required: true
-        },
-        bot_enabled: {
+        auto_role: {
             type: Boolean,
-            default: true
+            default: false
         }
     })],
+    channels: {
+        text: [new Schema({
+            _id: {
+                type: String,
+                required: true
+            },
+            bot_enabled: {
+                type: Boolean,
+                default: true
+            }
+        })],
+        voice: [new Schema({
+            _id: {
+                type: String,
+                required: true
+            }
+        })],
+        category: [new Schema({
+            _id: {
+                type: String,
+                required: true
+            }
+        })]
+    },
     messages_today: {
         type: Number,
         default: 0

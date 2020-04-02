@@ -5,7 +5,10 @@ module.exports = class ServerLogCommand extends Command {
         super(client, {
             title: "serverlog",
             aliases: [],
-            permissions: ["ADMINISTRATOR"],
+            permissions: {
+                bot: [],
+                user: ["MANAGE_GUILD"]
+            },
             description: "Configures the server log.",
             usage: `<channel ID> OR disable`,
             category: `utility`

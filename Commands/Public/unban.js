@@ -1,11 +1,15 @@
 const { Command } = require("../../Structures")
+const { ModLog } = require("../../Modules")
 
 module.exports = class UnbanCommand extends Command {
     constructor(client) {
         super(client, {
             title: `unban`,
             aliases: [],
-            permissions: [`BAN_MEMBERS`],
+            permissions: {
+                bot: ["BAN_MEMBERS"],
+                user: ["BAN_MEMBERS"]
+            },
             description: "Unbans a banned user from the server.",
             usage: `<user> | <reason>`,
             category: `moderation`
@@ -32,7 +36,18 @@ module.exports = class UnbanCommand extends Command {
                         usr_id: user.id,
                         svr_id: msg.guild.id
                     })
-                    msg.channel.send({
+                    await ModLog.createEntry(this.client, msg.guild, {
+                        action: `Unban`,
+                        user: user,
+                        moderator: msg.author,
+                        reason: reason
+                    }).catch(err => {
+                        this.client.log.warn(`Failed to create modlog entry`, {
+                            svr_id: msg.guild.id,
+                            usr_id: msg.author.id
+                        }, err)
+                    })
+                    await msg.channel.send({
                         embed: {
                             color: this.client.getEmbedColor(msg.guild),
                             title: `🚪 User Unbanned`,
@@ -44,7 +59,7 @@ module.exports = class UnbanCommand extends Command {
                         usr_id: ban.user.id,
                         svr_id: msg.guild.id
                     }, err)
-                    msg.channel.send({
+                    await msg.channel.send({
                         embed: {
                             color: Colors.ERROR,
                             title: `❌ Error:`,
@@ -53,7 +68,7 @@ module.exports = class UnbanCommand extends Command {
                     })
                 }
             } else {
-                msg.channel.send({
+                await msg.channel.send({
                     embed: {
                         color: Colors.SOFT_ERROR,
                         description: `I couldn't find that user in the ban list.`
@@ -61,7 +76,7 @@ module.exports = class UnbanCommand extends Command {
                 })
             }
         } else {
-            msg.channel.send({
+            await msg.channel.send({
                 embed: {
                     color: Colors.SOFT_ERROR,
                     description: `I need a banned user to unban.`

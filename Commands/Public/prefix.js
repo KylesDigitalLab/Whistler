@@ -5,20 +5,24 @@ module.exports = class PrefixCommand extends Command {
         super(client, {
             title: "prefix",
             aliases: [],
-            permissions: ["ADMINISTRATOR"],
+            permissions: {
+                bot: [],
+                user: ["MANAGE_GUILD"]
+            },
             description: "Set a custom command prefix for the server.",
             usage: `<prefix>`,
             category: `bot`
         })
     }
-    async run(msg, { 
-        Colors 
+    async run(msg, {
+        Colors
     }, {
         serverDocument
     }, suffix) {
         if (suffix) {
+            suffix = suffix.trim()
             if (suffix.length < 10) {
-                serverDocument.config.prefix = suffix;
+                serverDocument.config.prefix = suffix
                 await msg.channel.send({
                     embed: {
                         color: this.client.getEmbedColor(msg.guild),
@@ -35,6 +39,13 @@ module.exports = class PrefixCommand extends Command {
                     }
                 })
             }
+        } else {
+            await msg.channel.send({
+                embed: {
+                    color: this.client.getEmbedColor(msg.guild),
+                    description: `My command prefix is \`${this.client.commands.getPrefix(serverDocument)}\`.`
+                }
+            })
         }
     }
 }

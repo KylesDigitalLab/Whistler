@@ -1,10 +1,9 @@
 const { Client, Collection, version: djsVersion } = require("discord.js");
 const { CommandManager, EventManager } = require("../Managers")
 const { platform, release } = require("os")
-const { readdir } = require("fs").promises
-const { Logger } = require("winston")
-const {models: db} = require("mongoose")
-const { Constants } = require("../Internals")
+const { Constants, Logger } = require("../Internals")
+const { StructureExtender } = require("../Modules/Utils")
+const { models } = require("mongoose")
 
 /** 
  * Represents a Discord client
@@ -13,18 +12,15 @@ const { Constants } = require("../Internals")
 module.exports = class ExtendedClient extends Client {
     /**
      * @param {Object} options 
-     * @param {Object} options.clientOptions 
      */
     constructor(config, configJS, options) {
-        if (options) {
-            super(options.clientOptions || {});
-        } else {
-            super()
-        }
+        StructureExtender()
+
+        super(options ? options.client || {} : {});
 
         this.initializedAt = Date.now();
 
-        this.log = new Logger(configJS.winston);
+        this.log = new Logger();
 
         Object.defineProperties(this, {
             config: {
@@ -38,7 +34,7 @@ module.exports = class ExtendedClient extends Client {
                 writeable: false
             }
         })
-        this.db = db;
+        this.db = models;
         /**
          * @type {EventManager}
          */
@@ -53,9 +49,9 @@ module.exports = class ExtendedClient extends Client {
 
     getEmbedColor(svr, color) {
         if (svr) {
-            const member = svr.member(this.user);
+            const member = svr.me;
             if (member.displayColor == 0) {
-                return defaultColor;
+                return Constants.Colors.INFO;
             } else {
                 return member.displayColor
             }

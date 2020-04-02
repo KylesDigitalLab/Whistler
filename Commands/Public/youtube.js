@@ -17,10 +17,10 @@ module.exports = class YouTubeCommand extends Command {
         if (suffix) {
             suffix = suffix.trim();
             try {
-                const { data } = await get(`https://www.googleapis.com/youtube/v3/search`, {
+                const response = await get(`https://www.googleapis.com/youtube/v3/search`, {
                     params: {
                         part: "snippet",
-                        key: auth.keys.googleAPI,
+                        key: auth.tokens.googleAPI,
                         q: encodeURIComponent(suffix).replace(/%20/g, "+"),
                         maxResults: 1,
                         safeSearch: "none"
@@ -29,18 +29,18 @@ module.exports = class YouTubeCommand extends Command {
                         "Accept": "application/json"
                     }
                 })
-                if (data.items.length > 0) {
-                    data.items.forEach(async item => {
+                if (response.data.items.length) {
+                    for(const item of response.data.items) {
                         const publishedAt = moment(item.snippet.publishedAt);
                         switch (item.id.kind) {
                             case `youtube#video`:
                                 await msg.channel.send(`https://youtu.be/${item.id.videoId}`)
                                 try {
-                                    const { data: vData } = await get(`https://www.googleapis.com/youtube/v3/videos`, {
+                                    const vResponse = await get(`https://www.googleapis.com/youtube/v3/videos`, {
                                         params: {
                                             part: "statistics",
                                             id: item.id.videoId,
-                                            key: auth.keys.googleAPI
+                                            key: auth.tokens.googleAPI
                                         },
                                         headers: {
                                             "Accept": "application/json"
@@ -53,17 +53,17 @@ module.exports = class YouTubeCommand extends Command {
                                             fields: [
                                                 {
                                                     name: `View Count:`,
-                                                    value: `${formatNumber(vData.items[0].statistics.viewCount)} views`,
+                                                    value: `${formatNumber(vResponse.data.items[0].statistics.viewCount)} views`,
                                                     inline: true
                                                 },
                                                 {
                                                     name: `Comments:`,
-                                                    value: `${formatNumber(vData.items[0].statistics.commentCount)} comments`,
+                                                    value: `${formatNumber(vResponse.data.items[0].statistics.commentCount)} comments`,
                                                     inline: true
                                                 },
                                                 {
                                                     name: `Rating:`,
-                                                    value: `${formatNumber(vData.items[0].statistics.likeCount)} likes,  ${formatNumber(vData.items[0].statistics.dislikeCount)} dislkes`,
+                                                    value: `${formatNumber(vResponse.data.items[0].statistics.likeCount)} likes,  ${formatNumber(vResponse.data.items[0].statistics.dislikeCount)} dislkes`,
                                                     inline: true
                                                 },
                                                 {
@@ -96,11 +96,11 @@ module.exports = class YouTubeCommand extends Command {
                                 break;
                             case `youtube#channel`:
                                 try {
-                                    const { data: chData } = await get(`https://www.googleapis.com/youtube/v3/channels`, {
+                                    const chResponse = await get(`https://www.googleapis.com/youtube/v3/channels`, {
                                         params: {
                                             part: "statistics",
                                             id: item.id.channelId,
-                                            key: auth.keys.googleAPI
+                                            key: auth.tokens.googleAPI
                                         },
                                         headers: {
                                             "Accept": "application/json"
@@ -123,7 +123,9 @@ module.exports = class YouTubeCommand extends Command {
                                                 },
                                                 {
                                                     name: `Detailed Statistics:`,
-                                                    value: `${formatNumber(chData.items[0].statistics.videoCount)} videos\n${!chData.items[0].statistics.hiddenSubscriberCount ? `${formatNumber(chData.items[0].statistics.subscriberCount)} subscribers` : `Unknown`}\n${formatNumber(chData.items[0].statistics.viewCount)} views`,
+                                                    value: `${formatNumber(chResponse.data.items[0].statistics.videoCount)} videos
+                                                    ${!chResponse.data.items[0].statistics.hiddenSubscriberCount ? `${formatNumber(chResponse.data.items[0].statistics.subscriberCount)} subscribers` : `Unknown`}
+                                                    ${formatNumber(chResponse.data.items[0].statistics.viewCount)} views`,
                                                     inline: true
                                                 }
                                             ],
@@ -178,7 +180,7 @@ module.exports = class YouTubeCommand extends Command {
                                 })
                                 break;
                         }
-                    })
+                    }
                 } else {
                     await msg.channel.send({
                         embed: {

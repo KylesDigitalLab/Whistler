@@ -11,52 +11,49 @@ module.exports = class messageDelete extends Event {
     }
     async handle(msg) {
         const [svr, usr, ch] = [msg.guild, msg.author, msg.channel]
-        this.client.log.silly(`Message by ${usr.tag} deleted in channel #${ch.name} in ${svr.name}`, {
-            svr_id: svr.id,
+        this.client.log.silly(`Message by ${usr.tag} deleted in channel #${ch.name} in ${svr ? svr.name : "DM"}`, {
+            svr_id: svr ? svr.id : "DM",
             usr_id: usr.id,
             msg_id: msg.id,
             msg_content: msg.content
         })
-        const serverDocument = await svr.populateDocument()
-        if (serverDocument) {
-            if (serverDocument.config.log.enabled) {
-                const channel = await this.client.channels.fetch(serverDocument.config.log.channel_id)
-                await channel.send({
-                    embed: {
-                        thumbnail: {
-                            url: usr.avatarURL()
-                        },
-                        color: Constants.Colors.WARNING,
-                        title: `⚠️ Message Deleted:`,
-                        description: `**${usr.tag}**'s message has been deleted:`,
-                        fields: [
-                            {
-                                name: `✉️ Content:`,
-                                value: msg.content || `\`No Content\``,
-                                inline: true
+        if (svr) {
+            const serverDocument = await svr.populateDocument()
+            if (serverDocument) {
+                if (serverDocument.config.log.enabled) {
+                    const channel = svr.channels.cache.get(serverDocument.config.log.channel_id)
+                    await channel.send({
+                        embed: {
+                            thumbnail: {
+                                url: usr.avatarURL()
                             },
-                            {
-                                name: `🆔:`,
-                                value: msg.id,
-                                inline: true
-                            },
-                            {
-                                name: `📨 Sent:`,
-                                value: moment(msg.createdTimestamp).format(serverDocument.config.date_format),
-                                inline: true
+                            color: Constants.Colors.WARNING,
+                            title: `⚠️ Message Deleted:`,
+                            description: `**${usr.tag}**'s message in ${ch.toString()} has been deleted:\`\`\`${msg.content || "No Content"}\`\`\``,
+                            fields: [
+                                {
+                                    name: `🆔:`,
+                                    value: msg.id,
+                                    inline: true
+                                },
+                                {
+                                    name: `📨 Sent:`,
+                                    value: svr.formatDate(msg.createdAt),
+                                    inline: true
+                                }
+                            ],
+                            footer: {
+                                text: `User ID: ${usr.id} | ${svr.formatDate()}`
                             }
-                        ],
-                        footer: {
-                            text: `User ID: ${usr.id} | ${moment(new Date()).format(serverDocument.config.date_format)}`
                         }
-                    }
+                    })
+                }
+            } else {
+                this.client.log.error(`Could not find server document for ${svr.name}`, {
+                    svr_id: svr.name,
+                    serverDocument: serverDocument
                 })
             }
-        } else {
-            this.client.log.error(`Could not find server document for ${svr.name}`, {
-                svr_id: svr.name,
-                serverDocument: serverDocument
-            })
         }
     }
 }

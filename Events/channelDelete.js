@@ -18,8 +18,13 @@ module.exports = class channelDelete extends Event {
             })
             const serverDocument = await svr.populateDocument()
             if (serverDocument) {
+                switch (ch.type) {
+                    case "text":
+                        serverDocument.channels.text.remove(ch.id)
+                        break;
+                }
                 if (serverDocument.config.log.enabled) {
-                    const channel = await this.client.channels.fetch(serverDocument.config.log.channel_id)
+                    const channel = svr.channels.cache.get(serverDocument.config.log.channel_id)
                     const embedFields = [];
                     if (channel.name) {
                         embedFields.push({
@@ -35,7 +40,7 @@ module.exports = class channelDelete extends Event {
                             description: `A ${ch.type} channel was deleted.`,
                             fields: embedFields,
                             footer: {
-                                text: `Channel ID: ${ch.id} | ${moment(new Date()).format(serverDocument.config.date_format)}`
+                                text: `Channel ID: ${ch.id} | ${svr.formatDate()}`
                             }
                         }
                     })

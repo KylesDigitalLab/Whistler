@@ -21,8 +21,7 @@ module.exports = class HelpCommand extends Command {
         if (!suffix) {
             //Get a full listing of all commands
             let commands;
-            let titles = []
-            let descriptions = []
+            let [titles, descriptions] = [[], []]
             this.client.commands.categories.forEach(async category => {
                 if (category.name == "maintainer" && this.client.config.maintainers.includes(msg.author.id)) return;
                 commands = this.client.commands.public.all.filter(c => c.data.category == category.name)
