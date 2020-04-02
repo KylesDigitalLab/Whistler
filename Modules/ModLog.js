@@ -2,7 +2,7 @@ const moment = require("moment")
 
 module.exports = class ModLog {
     constructor() {
-        throw new Error(`STATIC_CLASS`)
+        throw new Error(`STATIC_CLASS`, {}, this.constructor.name)
     }
     static async createEntry(client, svr, entry) {
         const serverDocument = svr.serverDocument || await svr.populateDocument()

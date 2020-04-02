@@ -14,6 +14,7 @@ module.exports = class FetchCommand extends Command {
     async run(msg, {
         Colors,
         Emojis,
+        StatusText,
         ImageURLOptions,
         GUILD_VERIFICATION_LEVELS
     }, {
@@ -69,23 +70,9 @@ module.exports = class FetchCommand extends Command {
                     }
                 ]
                 if (user.presence) {
-                    switch (user.presence.status) {
-                        case `dnd`:
-                            status = `🔴 Do Not Disturb`
-                            break;
-                        case `online`:
-                            status = `🟢 Online`
-                            break;
-                        case `idle`:
-                            status = `🟡 Idle`
-                            break;
-                        case `offline`:
-                            status = `⚫ Offline`
-                            break;
-                    }
                     fields.push({
                         name: `🚦 Status:`,
-                        value: status,
+                        value: StatusText[user.presence.status],
                         inline: true
                     })
                 }

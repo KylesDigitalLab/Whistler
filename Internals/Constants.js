@@ -108,7 +108,7 @@ Constants.CommandCategories = [
 Constants.APIs = {
     CAT: `http://aws.random.cat/meow`,
     TWITRSS: user => `http://twitrss.me/twitter_user_to_rss/?user=${encodeURIComponent(user)}`,
-    REDDIT: subreddit => `https://www.reddit.com/r/${encodeURIComponent(subreddit)}.json`,
+    REDDIT: subreddit => `https://www.reddit.com/r/${encodeURIComponent(subreddit)}.json`
 }
 
 Constants.Text = {

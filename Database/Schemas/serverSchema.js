@@ -37,6 +37,20 @@ module.exports = new Schema({
                 default: []
             }
         },
+        custom_api_keys: {
+            google_api_key: {
+                type: String,
+                required: false
+            },
+            google_cse_id: {
+                type: String,
+                required: false
+            },
+            google_maps_api_key: {
+                type: String,
+                required: false
+            }
+        },
         moderation: {
             log: {
                 enabled: {

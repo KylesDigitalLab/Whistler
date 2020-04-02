@@ -83,6 +83,8 @@ module.exports = class WebSocket {
             scope: this.discordOAuthScopes
         }));
 
+        this.app.get(`/403`, (req, res) => res.sendStatus(403))
+
         this.app.get("/login/callback", passport.authenticate("discord", {
             failureRedirect: "/error"
         }), (req, res) => {

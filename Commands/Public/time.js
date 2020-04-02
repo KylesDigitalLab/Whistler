@@ -16,6 +16,7 @@ module.exports = class TimeCommand extends Command {
     async run(msg, {
         Colors
     }, {
+        serverDocument,
         userDocument
     }, suffix) {
         let address;
@@ -50,7 +51,7 @@ module.exports = class TimeCommand extends Command {
                 const response = await get(`https://maps.googleapis.com/maps/api/geocode/json`, {
                     params: {
                         address: address,
-                        key: auth.tokens.googleMapsAPI
+                        key: serverDocument.config.custom_api_keys.google_maps_api_key || auth.tokens.google_maps_api_key
                     },
                     headers: {
                         "Accept": "application/json"
@@ -61,7 +62,7 @@ module.exports = class TimeCommand extends Command {
                         params: {
                             location: `${response.data.results[0].geometry.location.lat},${response.data.results[0].geometry.location.lng}`,
                             timestamp: Math.floor(Date.now() / 1000),
-                            key: auth.tokens.googleMapsAPI
+                            key: serverDocument.config.custom_api_keys.google_maps_api_key || auth.tokens.google_maps_api_key
                         },
                         headers: {
                             "Accept": "application/json"

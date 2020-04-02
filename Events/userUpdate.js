@@ -23,9 +23,7 @@ module.exports = class userUpdate extends Event {
                                 embed: {
                                     color: this.client.getEmbedColor(svr, Constants.Colors.YELLOW),
                                     thumbnail: {
-                                        url: newUser.avatarURL({
-                                            format: `png`
-                                        })
+                                        url: newUser.avatarURL(Constants.ImageURLOptions)
                                     },
                                     title: `👤 Avatar Update`,
                                     description: `**${newUser.tag}** updated [their old avatar](${oldUser.avatarURL()}).`,

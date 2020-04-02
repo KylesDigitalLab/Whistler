@@ -13,14 +13,18 @@ module.exports = class YouTubeCommand extends Command {
             category: `media`
         })
     }
-    async run(msg, { Colors }, { serverDocument }, suffix) {
+    async run(msg, { 
+        Colors 
+    }, { 
+        serverDocument 
+    }, suffix) {
         if (suffix) {
             suffix = suffix.trim();
             try {
                 const response = await get(`https://www.googleapis.com/youtube/v3/search`, {
                     params: {
                         part: "snippet",
-                        key: auth.tokens.googleAPI,
+                        key: serverDocument.config.custom_api_keys.google_api_key || auth.tokens.google_api_key,
                         q: encodeURIComponent(suffix).replace(/%20/g, "+"),
                         maxResults: 1,
                         safeSearch: "none"
@@ -30,7 +34,7 @@ module.exports = class YouTubeCommand extends Command {
                     }
                 })
                 if (response.data.items.length) {
-                    for(const item of response.data.items) {
+                    for (const item of response.data.items) {
                         const publishedAt = moment(item.snippet.publishedAt);
                         switch (item.id.kind) {
                             case `youtube#video`:
@@ -40,7 +44,7 @@ module.exports = class YouTubeCommand extends Command {
                                         params: {
                                             part: "statistics",
                                             id: item.id.videoId,
-                                            key: auth.tokens.googleAPI
+                                            key: serverDocument.config.custom_api_keys.google_api_key || auth.tokens.google_api_key
                                         },
                                         headers: {
                                             "Accept": "application/json"
@@ -100,7 +104,7 @@ module.exports = class YouTubeCommand extends Command {
                                         params: {
                                             part: "statistics",
                                             id: item.id.channelId,
-                                            key: auth.tokens.googleAPI
+                                            key: serverDocument.config.custom_api_keys.google_api_key || auth.tokens.google_api_key
                                         },
                                         headers: {
                                             "Accept": "application/json"
@@ -141,8 +145,7 @@ module.exports = class YouTubeCommand extends Command {
                                         usr_id: msg.author.id,
                                     }, stack)
                                     //Be nice and send them the channel result anyway
-                                    await msg.channel.send(`https://www.youtube.com/channel/${item.id.channelId}`)
-                                    await msg.channel.send({
+                                    await msg.channel.send(`https://www.youtube.com/channel/${item.id.channelId}`, {
                                         embed: {
                                             color: Colors.ERROR,
                                             description: `Sorry, I couldn't get stats for this channel.`,
