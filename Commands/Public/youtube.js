@@ -57,17 +57,17 @@ module.exports = class YouTubeCommand extends Command {
                                             fields: [
                                                 {
                                                     name: `View Count:`,
-                                                    value: `${formatNumber(vResponse.data.items[0].statistics.viewCount)} views`,
+                                                    value: `${vResponse.data.items[0].statistics.viewCount.toLocaleString()} views`,
                                                     inline: true
                                                 },
                                                 {
                                                     name: `Comments:`,
-                                                    value: `${formatNumber(vResponse.data.items[0].statistics.commentCount)} comments`,
+                                                    value: `${vResponse.data.items[0].statistics.commentCount.toLocaleString()} comments`,
                                                     inline: true
                                                 },
                                                 {
                                                     name: `Rating:`,
-                                                    value: `${formatNumber(vResponse.data.items[0].statistics.likeCount)} likes,  ${formatNumber(vResponse.data.items[0].statistics.dislikeCount)} dislkes`,
+                                                    value: `${vResponse.data.items[0].statistics.likeCount.toLocaleString()} likes,  ${formatNumber(vResponse.data.items[0].statistics.dislikeCount)} dislkes`,
                                                     inline: true
                                                 },
                                                 {
@@ -127,9 +127,9 @@ module.exports = class YouTubeCommand extends Command {
                                                 },
                                                 {
                                                     name: `Detailed Statistics:`,
-                                                    value: `${formatNumber(chResponse.data.items[0].statistics.videoCount)} videos
-                                                    ${!chResponse.data.items[0].statistics.hiddenSubscriberCount ? `${formatNumber(chResponse.data.items[0].statistics.subscriberCount)} subscribers` : `Unknown`}
-                                                    ${formatNumber(chResponse.data.items[0].statistics.viewCount)} views`,
+                                                    value: `${chResponse.data.items[0].statistics.videoCount.toLocaleString()} videos
+                                                    ${!chResponse.data.items[0].statistics.hiddenSubscriberCount ? `${chResponse.data.items[0].statistics.subscriberCount.toLocaleString()} subscribers` : `Unknown`}
+                                                    ${chResponse.data.items[0].statistics.viewCount.toLocaleString()} views`,
                                                     inline: true
                                                 }
                                             ],

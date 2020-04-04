@@ -62,7 +62,7 @@ module.exports = class channelCreate extends Event {
                     })
                 }
             } else {
-                this.client.log.error(`Could not find server document for ${svr.name}`, {
+                this.client.log.error(`Could not find server document for ${svr.name} for channelCreate`, {
                     svr_id: svr.name,
                     serverDocument: serverDocument
                 })

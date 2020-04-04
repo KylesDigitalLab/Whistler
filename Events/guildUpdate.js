@@ -48,7 +48,7 @@ module.exports = class guildUpdate extends Event {
                 }
             }
         } else {
-            this.client.log.error(`Could not find server document for ${svr.name}`, {
+            this.client.log.error(`Could not find server document for ${svr.name} for guildUpdate`, {
                 svr_id: svr.id,
                 serverDocument: serverDocument
             })

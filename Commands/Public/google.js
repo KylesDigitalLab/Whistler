@@ -44,7 +44,10 @@ module.exports = class GoogleCommand extends Command {
                                 descriptions.push(item.snippet)
                                 urls.push(item.link)
                                 if (item.pagemap.cse_image) {
-                                    thumbnails.push(item.pagemap.cse_image[0].src)
+                                    let img = item.pagemap.cse_image[0].src
+                                    if(img.startsWith("http://") || img.startsWith("https://")) {
+                                        thumbnails.push(img)
+                                    }
                                 }
                                 break;
                         }
@@ -64,7 +67,7 @@ module.exports = class GoogleCommand extends Command {
                         embed: {
                             color: Colors.SOFT_ERROR,
                             title: `⚠️ Warning:`,
-                            description: `No results were found for '${suffix}'`
+                            description: `No results were found.`
                         }
                     })
                 }

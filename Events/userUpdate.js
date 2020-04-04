@@ -10,6 +10,7 @@ module.exports = class userUpdate extends Event {
         })
     }
     async handle(oldUser, newUser) {
+        const userDocument = await newUser.populateDocument();
         this.client.guilds.cache
             .filter(svr => svr.members.cache.has(newUser.id))
             .forEach(async svr => {
@@ -32,6 +33,9 @@ module.exports = class userUpdate extends Event {
                                     }
                                 }
                             })
+                        }
+                        if(newUser.tag !== oldUser.tag) {
+                            userDocument.tag = newUser.tag;
                         }
                         //Handle username changes
                         if (newUser.username !== oldUser.username) {
@@ -66,11 +70,12 @@ module.exports = class userUpdate extends Event {
                         }
                     }
                 } else {
-                    this.client.log.error(`Could not find server document for ${svr.name}`, {
+                    this.client.log.error(`Could not find server document for ${svr.name} for userUpdate`, {
                         svr_id: svr.id,
                         serverDocument: serverDocument
                     })
                 }
             })
+        await userDocument.save()
     }
 }

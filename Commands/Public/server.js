@@ -21,7 +21,6 @@ module.exports = class ServerCommand extends Command {
     }, suffix) {
         let svr = msg.guild;
         let [userCount, botCount] = [svr.members.cache.filter(m => !m.user.bot).size, svr.members.cache.filter(m => m.user.bot).size]
-        this.s = num => num == 1 ? `` : `s`
         await msg.channel.send({
             embed: {
                 color: this.client.getEmbedColor(msg.guild),
@@ -47,13 +46,13 @@ module.exports = class ServerCommand extends Command {
                     },
                     {
                         name: `👥 Members:`,
-                        value: `${userCount} user${this.s(userCount)}, ${botCount} bot${this.s(botCount)}
+                        value: `${userCount} user${userCount.getPlural()}, ${botCount} bot${botCount.getPlural()}
                         (${svr.memberCount} total)`,
                         inline: true
                     },
                     {
                         name: `Roles:`,
-                        value: `${svr.roles.cache.size} role${this.s(svr.roles.cache.size)}`,
+                        value: `${svr.roles.cache.size} role${svr.roles.cache.size.getPlural()}`,
                         inline: true
                     },
                     {
@@ -66,7 +65,7 @@ module.exports = class ServerCommand extends Command {
                     },
                     {
                         name: `Emojis:`,
-                        value: `${svr.emojis.cache.size} custom emoji${this.s(svr.emojis.cache.size)}`,
+                        value: `${svr.emojis.cache.size} custom emoji${svr.emojis.cache.size.getPlural()}`,
                         inline: true
                     },
                     {

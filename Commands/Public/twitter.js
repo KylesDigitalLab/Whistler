@@ -39,25 +39,23 @@ module.exports = class Twitter extends Command {
                 }
             });
 
-            const tweets = await getRSS(APIs.TWITRSS(query), num).catch(async err => {
-                if (err === "invalid") {
-                    return [];
-                } else {
-                    await m.edit({
-                        embed: {
-                            color: Colors.ERROR,
-                            title: `❌ Oh No!`,
-                            description: `Something went wrong while contacting TwitRSS.`
-                        }
-                    })
-                }
-            });
+            const tweets = await getRSS(APIs.TWITRSS(query), num)
+                .catch(async err => {
+                    if (err === "invalid") {
+                        return [];
+                    } else {
+                        await m.edit({
+                            embed: {
+                                color: Colors.ERROR,
+                                title: `❌ Oh No!`,
+                                description: `Something went wrong while contacting TwitRSS.`
+                            }
+                        })
+                    }
+                });
             if (tweets.length) {
-                const authors = [];
-                const authorUrls = [];
-                const descriptions = [];
-                const timestamps = [];
-                for(const t of tweets) {
+                const [authors, authorUrls, descriptions, timestamps] = [[], [], [], []]
+                for (const t of tweets) {
                     authors.push(t.creator)
                     authorUrls.push(t.link)
                     descriptions.push(t.contentSnippet);

@@ -4,7 +4,7 @@ const { DiscordAPIError } = require("discord.js")
 const { Stopwatch } = require("../Modules/Utils")
 const { Constants } = require("../Internals")
 
-module.exports = class MessageCreate extends Event {
+module.exports = class messageCreate extends Event {
     constructor(client) {
         super(client, {
             title: `message`,
@@ -14,7 +14,7 @@ module.exports = class MessageCreate extends Event {
     async checkRequirements(msg) {
         if (msg.author.id == this.client.user.id) {
             this.client.log.verbose(`Ignoring self-message.`, {
-                svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
+                svr_id: msg.guild ? msg.guild.id : "DM",
                 ch_id: msg.channel.id,
                 msg_id: msg.id
             })
@@ -22,10 +22,18 @@ module.exports = class MessageCreate extends Event {
         }
         if (msg.author.bot) {
             this.client.log.verbose(`Ignoring message from bot ${msg.author.tag}.`, {
-                svr_id: `${msg.guild ? msg.guild.id : "DM"}`,
+                svr_id: msg.guild ? msg.guild.id : "DM",
+                ch_id: msg.channel.id,
+                msg_id: msg.id
+            })
+            return false;
+        }
+        if(msg.webhookID) {
+            this.client.log.verbose(`Ignoring message from webhook.`, {
+                svr_id: msg.guild ? msg.guild.id : "DM",
                 ch_id: msg.channel.id,
                 msg_id: msg.id,
-                content: msg.content
+                webhook_id: msg.webhookID
             })
             return false;
         }
@@ -255,7 +263,7 @@ module.exports = class MessageCreate extends Event {
                     await serverDocument.save()
                     await userDocument.save()
                 } else {
-                    this.client.log.error(`Could not find server document for ${msg.guild.name}`, {
+                    this.client.log.error(`Could not find server document for ${msg.guild.name} for message`, {
                         svr_id: msg.guild.id,
                         serverDocument: serverDocument
                     })

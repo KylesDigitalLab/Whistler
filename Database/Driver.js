@@ -6,7 +6,7 @@ module.exports = class MongoDriver {
     constructor(bot) {
         this.bot = bot;
     }
-    initialize = async url => {
+    async initialize(url) {
         await connect(url, {
             connectTimeoutMS: 30000,
             socketTimeoutMS: 30000,
@@ -19,8 +19,9 @@ module.exports = class MongoDriver {
         model("servers", serverSchema)
         model("users", userSchema)
 
-        connection.on("error", err => this.bot.log.error(`An error occurred with the MongoDB connection`, err))
-        //connection.once("open", resolve)
+        connection.on("error", err => {
+            this.bot.log.error(`An error occurred with the MongoDB connection`, err)
+        })
         return models;
     }
     get = () => models

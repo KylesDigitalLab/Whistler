@@ -42,7 +42,7 @@ module.exports = class guildMemberAdd extends Event {
                 if (role) {
                     if (svr.me.hasPermission("MANAGE_ROLES")) {
                         await member.roles.add(role).catch(err => {
-                            this.client.log.warn(`Failed to give new member ${usr.tag} role '${role.name}'`, {
+                            this.client.log.warn(`Failed to give new member ${usr.tag} role ${role.name} for guildMemberAdd`, {
                                 svr_id: svr.id,
                                 usr_id: usr.id,
                                 role_id: roleDocument._id
@@ -54,7 +54,7 @@ module.exports = class guildMemberAdd extends Event {
 
             await serverDocument.save();
         } else {
-            this.client.log.error(`Could not find server document for ${svr.name}`, {
+            this.client.log.error(`Could not find server document for ${svr.name} for guildMemberAdd`, {
                 svr_id: svr.id,
                 serverDocument: serverDocument
             })

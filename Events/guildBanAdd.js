@@ -17,7 +17,7 @@ module.exports = class guildBanAdd extends Event {
         const serverDocument = await svr.populateDocument()
         if (serverDocument) {
             if (serverDocument.config.log.enabled) {
-                const ch = await svr.channels.cache.get(serverDocument.config.log.channel_id)
+                const ch = svr.channels.cache.get(serverDocument.config.log.channel_id)
                 await ch.send({
                     embed: {
                         thumbnail: {
@@ -33,7 +33,7 @@ module.exports = class guildBanAdd extends Event {
                 })
             }
         } else {
-            this.client.log.error(`Could not find server document for ${svr.name}`, {
+            this.client.log.error(`Could not find server document for ${svr.name} for guildBanAdd`, {
                 svr_id: svr.name,
                 serverDocument: serverDocument
             })
